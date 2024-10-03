@@ -1,0 +1,15 @@
+.venv/*
+__pycache__
+sold_players
+teams
+unsold_players
+venv
+cmd.txt
+image draw overlay.py
+main.py
+masterdf.csv
+players_data.json
+run.py
+main.py
+.venv
+.venv/Lib/site-packages/numpy-2.1.1-cp312-cp312-win_amd64.whl

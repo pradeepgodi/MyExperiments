@@ -7,30 +7,6 @@ import datetime
 import numpy as np
 from PIL import ImageDraw,Image,ExifTags,ImageOps
 
-# import base64
-# @st.cache_resource(persist="disk")
-# def get_base64_of_bin_file(bin_file):
-#     with open(bin_file, 'rb') as f:
-#         data = f.read()
-#     return base64.b64encode(data).decode()
-
-# def set_png_as_page_bg(png_file):
-#     bin_str = get_base64_of_bin_file(png_file)
-#     page_bg_img = '''
-#                     <style>
-#                     body {
-#                     background-image: url("data:image/png;base64,%s");
-#                     background-size: cover;
-#                     }
-#                     </style>
-#                     ''' % bin_str
-    
-#     st.markdown(page_bg_img, unsafe_allow_html=True)
-#     return
-
-# set_png_as_page_bg('.\\default_image.png')
-
-
 # Styling for Sidebar buttons
 st.markdown("""
 <style>
@@ -112,6 +88,7 @@ def get_count_of_players_auctioned():
 
 # Function Definitions for Button Actions
 def fetch_data():
+    print("Fetching new Player")
     player_for_auction,player_metadata=get_new_player()
     if player_for_auction and player_metadata :
         st.session_state.player_name = player_for_auction
@@ -135,41 +112,21 @@ def fetch_data():
         # Reset button clicks (to allow them to be clicked again after fetching new data)
         st.session_state.sell_button_clicked = False
         st.session_state.unsold_button_clicked = False
+        
+        pending_count= str((len(list(st.session_state.players_data.keys())) - (int(st.session_state.players_sold_count)+int(st.session_state.players_unsold_count))))
+        print("pending count when fetching =",pending_count)
+        if pending_count==0:
+            st.session_state.exit_button_enabled=True
+
     else:
         # When all players are auctioned display the default image 
         st.session_state.image_url= ".\\default_image.jpg" 
         st.session_state.sell_message =" "
         # st.session_state.emoji =" "
         st.session_state.player_name ="Player Name"
-        st.session_state.player_style = "Playing Style" 
+        st.session_state.player_style = "Playing Style"     
 
-        # # Move sold and unsold players to separate folders
-        # masterdf = pd.read_csv('masterdf.csv') 
-        # sold_players=list(masterdf[masterdf['status']=='sold']['player'])
-        # unsold_players=list(masterdf[masterdf['status']=='unsold']['player'])
-        # with open("players_data.json") as json_file:
-        #     players_data = json.load(json_file)
-        #     print("player_data",players_data)
-        # if len(players_data.keys())>0:        
-        #     for sold in sold_players:
-        #         print(players_data[sold][-1])
-        #         image_to_move=players_data[sold][-1]
-        #         source = ".\\enrolled_players\\"+image_to_move
-        #         destination=".\\sold_players\\"+image_to_move   
-        #         os.rename(source, destination)                 
-        #     for unsold in unsold_players:
-        #         print(players_data[unsold][-1])
-        #         image_to_move=players_data[unsold][-1]
-        #         source = ".\\enrolled_players\\"+image_to_move
-        #         destination=".\\unsold_players\\"+image_to_move   
-        #         os.rename(source, destination)
-        # else:
-        #     # When all players are auctioned display the default image 
-        #     st.session_state.image_url= ".\\default_image.jpg" 
-        #     # st.session_state.player_name ="Player Name"
-        #     # st.session_state.player_style = "Player Style" 
-        #     st.session_state.sell_message =" "
-        #     # st.session_state.emoji =" "        
+
 
 
 def sell_player():
@@ -188,7 +145,7 @@ def sell_player():
         masterdf.loc[len(masterdf.index)] = list(player_sell_record)
         masterdf.to_csv('masterdf.csv',index=False)
         st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
-        st.session_state.sell_message = f"\"{st.session_state.player_name}\" sold to \"{st.session_state.captain_choice}\" for {st.session_state.price_input}"
+        st.session_state.sell_message = f"{st.session_state.player_name} sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
         # st.session_state.emoji = ":smile:"
 
         # Update Wallet Table after selling player
@@ -229,7 +186,7 @@ def unsold_player():
                             st.session_state.player_name,'unsold','None',
                             st.session_state.player_ph,st.session_state.player_wing ]
     
-    st.session_state.sell_message = f"Unfortunately \"{st.session_state.player_name}\" went UNSOLD.You are moved to reserved list."
+    st.session_state.sell_message = f"{st.session_state.player_name} UNSOLD."
     # st.session_state.emoji = ":disappointed:"
     masterdf = pd.read_csv('masterdf.csv') 
     masterdf.loc[len(masterdf.index)] = list(player_unsell_record)
@@ -285,8 +242,9 @@ def exit_auction():
     st.session_state.selection_reset = 'None'
     st.session_state.fetch_button_enabled=False
 
-    # create separate csv files for each captain with his team 
-    for captain in captainNames:
+    # create separate csv files for each captain with his team
+    masterdf['captain'].replace(np.nan, 'None',inplace=True) 
+    for captain in list(set(masterdf['captain'].values)):
         if captain =='None':
             file_name = "unsold_players.csv"
         else:
@@ -294,11 +252,21 @@ def exit_auction():
         print(file_name)
         masterdf[masterdf['captain']==captain].reset_index(drop=True).to_csv(".\\teams\\"+file_name)
 
+
+def crop_image(image):
+    print("Cropping the image")  
+    image = Image.open(image)
+    new_image = image.resize((1280, 853))
+    # new_image.save('myimage_500.jpg')
+    return new_image
+
+
 def resize_image(image, width, height):
     print("Resizing the image to ", width, height)
     image_thumbnail = image.copy()
     image_thumbnail.thumbnail((width, height))
     print(f"The thumbnail image’s size is: {image_thumbnail.size}.")
+
     return image_thumbnail
       
 def potrait_image_orientation(image):
@@ -382,11 +350,12 @@ if 'sell_button_clicked' not in st.session_state:
 if 'unsold_button_clicked' not in st.session_state:
     # Track if the UNSOLD button has been clicked
     st.session_state.unsold_button_clicked = False
+
 if 'exit_button_enabled' not in st.session_state:
     st.session_state.exit_button_enabled = False
 if 'exit_button_clicked' not in st.session_state:
-    # Track if the UNSOLD button has been clicked
     st.session_state.exit_button_clicked = False    
+
 if 'fetch_button_enabled' not in st.session_state:
     st.session_state.fetch_button_enabled = True
 
@@ -432,7 +401,7 @@ with st.sidebar:
 
     # Complete the process
     with st.container(border=True):
-        print(st.session_state.exit_button_enabled)
+        # print(st.session_state.exit_button_enabled)
         exit_button = st.button('**EXIT**', on_click=exit_auction,help='Use this button after auction is complete.',\
                                 use_container_width=True,disabled=not st.session_state.exit_button_enabled or st.session_state.exit_button_clicked)
 
@@ -451,9 +420,11 @@ with tab1:
     print(orientation_corrected)  
     if orientation_corrected:
         display_image= oriented_image
-        # display_image=resize_image(oriented_image,1920,1080)
+        display_image=resize_image(oriented_image,1280,853)
     else:
+        display_image=resize_image(oriented_image,1280,853)
         display_image=st.session_state.image_url
+    # display_image=crop_image(oriented_image)    
     st.image(display_image, use_column_width=True)
     player_col, sell_msg_col = st.columns([1,2])
     with player_col:
@@ -461,7 +432,7 @@ with tab1:
         st.header(f"{st.session_state.player_name}")
         st.header(f"{st.session_state.player_style}")
     with sell_msg_col:
-        st.subheader(st.session_state.sell_message)
+        st.header(st.session_state.sell_message)
 with tab2:
     print("came to tab2")
     # Table Tab: Display the sold players DataFrame

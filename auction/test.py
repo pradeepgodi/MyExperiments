@@ -28,11 +28,20 @@ st.markdown("""
     }
 </style>""", unsafe_allow_html=True)
 
+def makedir(name):
+    try:
+        os.makedirs(name)
+        print("created new folder =",name)
+    except OSError:
+        pass    
 
-# create folders for file storage
-os.makedirs('sold_players',exist_ok=True)
-os.makedirs('unsold_players',exist_ok=True)
-os.makedirs('teams',exist_ok=True)
+makedir('sold_players')
+makedir('unsold_players')
+makedir('teams')
+
+# os.makedirs('sold_players',exist_ok=True)
+# os.makedirs('unsold_players',exist_ok=True)
+# os.makedirs('teams',exist_ok=True)
 
 
 # create master dataframe/csv to capture all activities
@@ -63,13 +72,11 @@ def get_new_player():
     with open("players_data.json") as json_file:
         players_data = json.load(json_file)
     enrolled_players= list(players_data.keys())
-    # print("Enrolled players = ",enrolled_players)   
     masterdf = pd.read_csv('masterdf.csv')
     auctioned_players_list = masterdf['player'].unique()
-    # print("Already Auctioned players = ",auctioned_players_list)
     try:
         player_for_auction=random.choice(list(set(enrolled_players) - set(auctioned_players_list)))
-        print("Player radomly selected for auction = ",player_for_auction,players_data[player_for_auction])
+        print("Player randomly selected for auction = ",player_for_auction,players_data[player_for_auction])
         return player_for_auction,players_data[player_for_auction]
     except:
         st.warning("All Players are Auctioned.Click on EXIT button.",icon="⚠️")
@@ -88,7 +95,7 @@ def get_count_of_players_auctioned():
 
 # Function Definitions for Button Actions
 def fetch_data():
-    print("Fetching new Player")
+    print("Clicked on Fetch new Player button")
     player_for_auction,player_metadata=get_new_player()
     if player_for_auction and player_metadata :
         st.session_state.player_name = player_for_auction
@@ -97,7 +104,7 @@ def fetch_data():
         st.session_state.player_style = player_metadata[2].split(".")[0]
         
         st.session_state.image_url = ".\\enrolled_players\\"+ player_metadata[-1]
-        print("Player image =",st.session_state.image_url)
+        # print("Player image =",st.session_state.image_url)
         st.session_state.df = pd.DataFrame(columns=captainNames[1:],index=range(numberOfPlayers))
 
         # Reset the previous BID price and captain selection values before new fetching of the players
@@ -114,7 +121,7 @@ def fetch_data():
         st.session_state.unsold_button_clicked = False
         
         pending_count= str((len(list(st.session_state.players_data.keys())) - (int(st.session_state.players_sold_count)+int(st.session_state.players_unsold_count))))
-        print("pending count when fetching =",pending_count)
+        print("Remaining players for auction =",pending_count)
         if pending_count==0:
             st.session_state.exit_button_enabled=True
 
@@ -165,8 +172,8 @@ def sell_player():
         if  len(players_data.keys())==  len(masterdf['player'].unique()):
             st.session_state.exit_button_enabled=True
 
-        print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
-        print(player_sell_record)
+        # print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
+        print("Player sell record = ",player_sell_record)
     else:
         print("bid price or empty captain name")
         st.session_state.sell_message="Enter correct BID price and select CAPTAIN name."
@@ -198,11 +205,11 @@ def unsold_player():
     if  len(players_data.keys())==  len(masterdf['player'].unique()):
         st.session_state.exit_button_enabled=True
 
-    print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
+    # print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
 
 
-    print ("player count total =",masterdf['player'].unique())
-    print("player_unsell_record=",player_unsell_record)
+    # print ("player count total =",masterdf['player'].unique())
+    print("Player unsold record=",player_unsell_record)
 
 def exit_auction():
     # # Move sold and unsold players to separate folders
@@ -249,7 +256,7 @@ def exit_auction():
             file_name = "unsold_players.csv"
         else:
             file_name = f"{captain}'s_team.csv"
-        print(file_name)
+        print("Creating teams =",file_name)
         masterdf[masterdf['captain']==captain].reset_index(drop=True).to_csv(".\\teams\\"+file_name)
 
 
@@ -262,10 +269,10 @@ def crop_image(image):
 
 
 def resize_image(image, width, height):
-    print("Resizing the image to ", width, height)
+    # print("Resizing the image to ", width, height)
     image_thumbnail = image.copy()
     image_thumbnail.thumbnail((width, height))
-    print(f"The thumbnail image’s size is: {image_thumbnail.size}.")
+    # print(f"The image re-sized to = {image_thumbnail.size}.")
 
     return image_thumbnail
       
@@ -282,7 +289,7 @@ def potrait_image_orientation(image):
             image=image.transpose(Image.ROTATE_270)
         elif exif[orientation] == 8:
             image=image.transpose(Image.ROTATE_90)
-        print("Image orientation is corrected =",image.size)
+        # print("Image orientation is corrected =",image.size)
         orientation_corrected=True
     except (AttributeError, KeyError, IndexError):
         # cases: image don't have getexif
@@ -298,20 +305,20 @@ if 'unsolddf' not in st.session_state:
     masterdf = pd.read_csv('masterdf.csv')  
     st.session_state.unsolddf = masterdf[masterdf['status']=='unsold'][['date', 'player', 'phone', 'wing']].reset_index(drop=True)
 if 'walletdf' not in st.session_state:
-    print("walletdf not defined")
+    # print("walletdf not defined")
     if masterdf.empty:
-        print("master df is empty")
+        # print("master df is empty")
         walletdf = pd.DataFrame(data={'captain':captainNames[1:]})
         walletdf[['balance']]=[100000]
         walletdf[['spent']]=[0]
         walletdf[['player']]=[0]
         st.session_state.walletdf = walletdf
     else:
-        print("master df is not emty")
+        # print("master df is not emty")
         df1=masterdf[['captain','price']].groupby(['captain']).sum()['price'].to_frame().reset_index().sort_values(by='captain')
         df2=masterdf[['captain','player']].groupby(['captain']).count()['player'].to_frame().reset_index().sort_values(by='captain')
         walletdf=df1.merge(df2,how='inner', on='captain')
-        print(walletdf)
+        # print(walletdf)
         walletdf['balance'] = total_purse_value - walletdf['price']
         walletdf.rename(columns={'price':'spent'},inplace=True)
         walletdf=walletdf[['captain', 'balance','spent', 'player']]
@@ -392,7 +399,7 @@ with st.sidebar:
         # st.write(f"Auctioned so far = {auctioned_count} / {total_count}")
         st.write(f"Auctioned so far = {auctioned_count}")
         pending_count= str((len(list(st.session_state.players_data.keys())) - (int(st.session_state.players_sold_count)+int(st.session_state.players_unsold_count))))
-        print("pending_count",pending_count)
+        # print("pending_count",pending_count)
         if int(pending_count) <=0:
             pending_count=0
             # st.session_state.exit_button_enabled = True   
@@ -410,20 +417,21 @@ with st.sidebar:
 tab1, tab2,tab3,tab4 = st.tabs(["Player Profile", "Sold","Unsold","Wallet"])
 with tab1:
     # with st.container(height=700):
-    print("came to tab1")
+    # print("came to tab1")
     # Player Tab: Display the image
 
     #check imgae orientation
     ref_image = Image.open(st.session_state.image_url)
-    print("Before = ",st.session_state.image_url,ref_image.size)
+    # print(f"Original Image = {st.session_state.image_url} and size ={ref_image.size}")
     oriented_image,orientation_corrected=potrait_image_orientation(ref_image)
-    print(orientation_corrected)  
+    # print(orientation_corrected)  
     if orientation_corrected:
         display_image= oriented_image
         display_image=resize_image(oriented_image,1280,853)
     else:
         display_image=resize_image(oriented_image,1280,853)
         display_image=st.session_state.image_url
+    # print("Corrected Image size after  = ",display_image.size)
     # display_image=crop_image(oriented_image)    
     st.image(display_image, use_column_width=True)
     player_col, sell_msg_col = st.columns([1,2])
@@ -434,7 +442,7 @@ with tab1:
     with sell_msg_col:
         st.header(st.session_state.sell_message)
 with tab2:
-    print("came to tab2")
+    # print("came to tab2")
     # Table Tab: Display the sold players DataFrame
     if not st.session_state.df.empty:
         masterdf = pd.read_csv('masterdf.csv')   
@@ -447,7 +455,7 @@ with tab2:
     else:
         st.write("No data to display. Click FETCH to load data.")
 with tab3:
-    print("came to tab3")
+    # print("came to tab3")
     # Table Tab: Display the unsold players DataFrame
     with st.container(border=True):
         if not st.session_state.df.empty:
@@ -461,11 +469,11 @@ with tab4:
     # Table Tab: Display the captain wallet DataFrame
     with st.container(border=True):
         if not st.session_state.walletdf.empty:
-            print("came to tab4")
+            # print("came to tab4")
             st.dataframe(st.session_state.walletdf.sort_values(by='captain'),use_container_width=True,hide_index=True)
             # st.table(st.session_state.walletdf.sort_values(by='captain'))
         else:
-            print("else part of tab4")
+            # print("else part of tab4")
             st.write("No data to display. Click FETCH to load data.")
 
 

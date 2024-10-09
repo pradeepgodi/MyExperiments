@@ -24,6 +24,11 @@ st.markdown("""
         # outline: 1px solid blue;
         # # border: 1px solid blue;
         # }  
+            
+    # .stHeading {
+    # padding: 0 30px; 
+    # white-space: nowrap; 
+}
 
     }
 </style>""", unsafe_allow_html=True)
@@ -39,11 +44,6 @@ makedir('sold_players')
 makedir('unsold_players')
 makedir('teams')
 
-# os.makedirs('sold_players',exist_ok=True)
-# os.makedirs('unsold_players',exist_ok=True)
-# os.makedirs('teams',exist_ok=True)
-
-
 # create master dataframe/csv to capture all activities
 if not os.path.isfile('masterdf.csv'):
     master_columns=['date','captain','player','status','price','phone','wing']
@@ -52,7 +52,9 @@ if not os.path.isfile('masterdf.csv'):
 
 # Get the list of Captains, purse value, number of players 
 captaindf = pd.read_csv("captains.csv")
-captainNames = ['None']+list(captaindf['name']) 
+order_names=list(captaindf['name'])
+order_names.sort()
+captainNames = ['None']+order_names
 numberOfPlayers=captaindf['players'][0]
 total_purse_value=int(captaindf['purse'][0])
 
@@ -62,7 +64,8 @@ st.session_state.players_data={}
 for player in os.listdir(path=".\\enrolled_players"):
     player_list=player.split('_')
     player_list.append(player)
-    st.session_state.players_data[player_list[0].upper()]=player_list[1:]  
+    # st.session_state.players_data[player_list[0].upper()]=player_list[1:]  
+    st.session_state.players_data[player_list[0]]=player_list[1:]  
 # Convert and write JSON object to file
 with open("players_data.json", "w") as outfile: 
     json.dump(st.session_state.players_data, outfile)
@@ -152,7 +155,8 @@ def sell_player():
         masterdf.loc[len(masterdf.index)] = list(player_sell_record)
         masterdf.to_csv('masterdf.csv',index=False)
         st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
-        st.session_state.sell_message = f"{st.session_state.player_name} sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
+        # st.session_state.sell_message = f"{st.session_state.player_name} sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
+        st.session_state.sell_message = f"Sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
         # st.session_state.emoji = ":smile:"
 
         # Update Wallet Table after selling player
@@ -191,9 +195,9 @@ def unsold_player():
     sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
     player_unsell_record = [ sell_date,'None',
                             st.session_state.player_name,'unsold','None',
-                            st.session_state.player_ph,st.session_state.player_wing ]
+                            str(st.session_state.player_ph),st.session_state.player_wing ]
     
-    st.session_state.sell_message = f"{st.session_state.player_name} UNSOLD."
+    st.session_state.sell_message = f"UNSOLD !!!"
     # st.session_state.emoji = ":disappointed:"
     masterdf = pd.read_csv('masterdf.csv') 
     masterdf.loc[len(masterdf.index)] = list(player_unsell_record)
@@ -204,11 +208,6 @@ def unsold_player():
         players_data = json.load(json_file)
     if  len(players_data.keys())==  len(masterdf['player'].unique()):
         st.session_state.exit_button_enabled=True
-
-    # print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
-
-
-    # print ("player count total =",masterdf['player'].unique())
     print("Player unsold record=",player_unsell_record)
 
 def exit_auction():
@@ -414,12 +413,8 @@ with st.sidebar:
 
 
 # Main Page Layout with Tabs
-tab1, tab2,tab3,tab4 = st.tabs(["Player Profile", "Sold","Unsold","Wallet"])
-with tab1:
-    # with st.container(height=700):
-    # print("came to tab1")
-    # Player Tab: Display the image
-
+player_tab, sold_tab,unslod_tab,wallet_tab = st.tabs(["Player Profile", "Sold","Unsold","Wallet"])
+with player_tab:
     #check imgae orientation
     ref_image = Image.open(st.session_state.image_url)
     # print(f"Original Image = {st.session_state.image_url} and size ={ref_image.size}")
@@ -436,13 +431,11 @@ with tab1:
     st.image(display_image, use_column_width=True)
     player_col, sell_msg_col = st.columns([1,2])
     with player_col:
-
-        st.header(f"{st.session_state.player_name}")
+        st.title(f"{st.session_state.player_name}")
         st.header(f"{st.session_state.player_style}")
     with sell_msg_col:
         st.header(st.session_state.sell_message)
-with tab2:
-    # print("came to tab2")
+with sold_tab:
     # Table Tab: Display the sold players DataFrame
     if not st.session_state.df.empty:
         masterdf = pd.read_csv('masterdf.csv')   
@@ -451,21 +444,25 @@ with tab2:
                 player_list=list(masterdf[(masterdf['captain']==captain_name) & (masterdf['status']=='sold')]['player'])
                 player_list=player_list + [np.nan] * (numberOfPlayers - len(player_list))
                 st.session_state.df[captain_name]=player_list
-        st.dataframe(st.session_state.df, use_container_width=True,hide_index=False)
+        col_order=list(set(masterdf['captain'].values)) 
+        col_order.remove(np.nan)
+        col_order.sort()       
+        st.dataframe(st.session_state.df, use_container_width=True,hide_index=False,column_order=col_order)
     else:
         st.write("No data to display. Click FETCH to load data.")
-with tab3:
+with unslod_tab:
     # print("came to tab3")
     # Table Tab: Display the unsold players DataFrame
     with st.container(border=True):
         if not st.session_state.df.empty:
             masterdf = pd.read_csv('masterdf.csv')
+            masterdf['phone']=masterdf['phone'].astype('string')
             st.session_state.unsolddf=masterdf[masterdf['status']=='unsold'][['date', 'player', 'phone', 'wing']].reset_index(drop=True)   
-            st.dataframe(st.session_state.unsolddf, use_container_width=True,hide_index=False)
+            st.dataframe(st.session_state.unsolddf, use_container_width=True,hide_index=False,column_config={"phone": st.column_config.TextColumn("phone",default="st.")})
             
         else:
             st.write("No data to display. Click FETCH to load data.")
-with tab4:
+with wallet_tab:
     # Table Tab: Display the captain wallet DataFrame
     with st.container(border=True):
         if not st.session_state.walletdf.empty:

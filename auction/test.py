@@ -98,7 +98,7 @@ def get_count_of_players_auctioned():
 
 # Function Definitions for Button Actions
 def fetch_data():
-    print("Clicked on Fetch new Player button")
+    print("Fetching new player for aution.")
     player_for_auction,player_metadata=get_new_player()
     if player_for_auction and player_metadata :
         st.session_state.player_name = player_for_auction
@@ -127,6 +127,7 @@ def fetch_data():
         print("Remaining players for auction =",pending_count)
         if pending_count==0:
             st.session_state.exit_button_enabled=True
+            
 
     else:
         # When all players are auctioned display the default image 
@@ -145,39 +146,96 @@ def sell_player():
     st.session_state.unsold_button_clicked = True
 
     if not (st.session_state.captain_choice =='None' or st.session_state.price_input ==''):
-        # create player records for book keeping
+        # # create player records for book keeping
         d=str(datetime.datetime.now())
         sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
-        player_sell_record = [  sell_date,st.session_state.captain_choice,
+        player_sell_record = [ sell_date,st.session_state.captain_choice,
                                 st.session_state.player_name,'sold',st.session_state.price_input,
                                 st.session_state.player_ph,st.session_state.player_wing ]
         masterdf = pd.read_csv('masterdf.csv') 
-        masterdf.loc[len(masterdf.index)] = list(player_sell_record)
-        masterdf.to_csv('masterdf.csv',index=False)
-        st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
-        # st.session_state.sell_message = f"{st.session_state.player_name} sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
-        st.session_state.sell_message = f"Sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
-        # st.session_state.emoji = ":smile:"
+        # print('Player sell record =',player_sell_record)
+        # print("captain selected =",st.session_state.captain_choice,st.session_state.price_input)
 
-        # Update Wallet Table after selling player
-        masterdf = pd.read_csv('masterdf.csv')
-        masterdf.replace(to_replace='None', value=np.nan,inplace=True)
-        masterdf.fillna(0, inplace=True)
-        masterdf['price']=masterdf['price'].astype(int,errors='ignore') 
-        row_id=st.session_state.walletdf.loc[st.session_state.walletdf['captain']==st.session_state.captain_choice].index[0]
-        price_value = masterdf[masterdf['captain']==st.session_state.captain_choice]['price'].sum()
-        player_count_value=masterdf[masterdf['captain']==st.session_state.captain_choice]['player'].count()
-        st.session_state.walletdf.loc[row_id,'spent']=price_value
-        st.session_state.walletdf.loc[row_id,'player']=player_count_value
-        st.session_state.walletdf.loc[row_id,'balance']=total_purse_value-price_value
+        # # Check wallet if player can be sold to a the captain
+        captain_wallet_price_balance=total_purse_value-masterdf[masterdf['captain']==st.session_state.captain_choice]['price'].sum()
+        captain_wallet_player_count =masterdf[masterdf['captain']==st.session_state.captain_choice]['player'].count()
+        st.session_state.sell_condition =  (int(st.session_state.price_input) <= int(captain_wallet_price_balance) and (captain_wallet_player_count<numberOfPlayers) )
+        # print('sell_condition =',st.session_state.sell_condition,captain_wallet_price_balance,captain_wallet_player_count)
 
-        with open("players_data.json") as json_file:
-            players_data = json.load(json_file)
-        if  len(players_data.keys())==  len(masterdf['player'].unique()):
-            st.session_state.exit_button_enabled=True
+        if st.session_state.sell_condition:
+            # print('allowed to bid and purchase')
+            print(f"Captain wallet={st.session_state.captain_choice},bal={captain_wallet_price_balance},spent={total_purse_value-captain_wallet_price_balance},player= {captain_wallet_player_count}")
 
-        # print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
-        print("Player sell record = ",player_sell_record)
+            masterdf.loc[len(masterdf.index)] = list(player_sell_record)
+            masterdf.to_csv('masterdf.csv',index=False)
+            st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
+            st.session_state.sell_message = f"Sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
+
+            total_sold_player_count=masterdf[masterdf['status']=='sold'].shape[0]
+            print('total player sold=',total_sold_player_count)
+            if total_sold_player_count == numberOfPlayers*len(order_names):
+                st.session_state.exit_button_enabled=True
+                st.session_state.fetch_button_enabled=False
+                st.warning("All Players are Auctioned. Click on EXIT button to wrap up auction.")
+
+
+
+            # Update Wallet Table after selling player
+            # masterdf = pd.read_csv('masterdf.csv')
+            masterdf.replace(to_replace='None', value=np.nan,inplace=True)
+            masterdf.fillna(0, inplace=True)
+            masterdf['price']=masterdf['price'].astype(int,errors='ignore') 
+            row_id=st.session_state.walletdf.loc[st.session_state.walletdf['captain']==st.session_state.captain_choice].index[0]
+            price_value = masterdf[masterdf['captain']==st.session_state.captain_choice]['price'].sum()
+            player_count_value=masterdf[masterdf['captain']==st.session_state.captain_choice]['player'].count()
+            st.session_state.walletdf.loc[row_id,'spent']=price_value
+            st.session_state.walletdf.loc[row_id,'player']=player_count_value
+            st.session_state.walletdf.loc[row_id,'balance']=total_purse_value-price_value
+
+            with open("players_data.json") as json_file:
+                players_data = json.load(json_file)
+            if  len(players_data.keys())==  len(masterdf['player'].unique()):
+                st.session_state.exit_button_enabled=True
+
+            # print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
+            print("Player sell record = ",player_sell_record)
+        else:
+            print("Captian has exceeded the wallet budget")
+            print(f"Captain={st.session_state.captain_choice},bal={captain_wallet_price_balance},player= {captain_wallet_player_count},purse & player = {total_purse_value} & {numberOfPlayers}")
+            msg = f"Wallet balance price ={captain_wallet_price_balance} and purchased players ={captain_wallet_player_count}"
+            st.session_state.sell_message=f"Wallet exceeded.Don't be greedy {st.session_state.captain_choice}."
+            st.session_state.sell_button_clicked = False
+            st.session_state.unsold_button_clicked = False
+
+            st.session_state.wallet_exceeded_captains.append(st.session_state.captain_choice)
+
+            
+        # masterdf.loc[len(masterdf.index)] = list(player_sell_record)
+        # masterdf.to_csv('masterdf.csv',index=False)
+        # st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
+        # # st.session_state.sell_message = f"{st.session_state.player_name} sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
+        # st.session_state.sell_message = f"Sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
+        # # st.session_state.emoji = ":smile:"
+
+        # # Update Wallet Table after selling player
+        # masterdf = pd.read_csv('masterdf.csv')
+        # masterdf.replace(to_replace='None', value=np.nan,inplace=True)
+        # masterdf.fillna(0, inplace=True)
+        # masterdf['price']=masterdf['price'].astype(int,errors='ignore') 
+        # row_id=st.session_state.walletdf.loc[st.session_state.walletdf['captain']==st.session_state.captain_choice].index[0]
+        # price_value = masterdf[masterdf['captain']==st.session_state.captain_choice]['price'].sum()
+        # player_count_value=masterdf[masterdf['captain']==st.session_state.captain_choice]['player'].count()
+        # st.session_state.walletdf.loc[row_id,'spent']=price_value
+        # st.session_state.walletdf.loc[row_id,'player']=player_count_value
+        # st.session_state.walletdf.loc[row_id,'balance']=total_purse_value-price_value
+
+        # with open("players_data.json") as json_file:
+        #     players_data = json.load(json_file)
+        # if  len(players_data.keys())==  len(masterdf['player'].unique()):
+        #     st.session_state.exit_button_enabled=True
+
+        # # print("compare player count",len(players_data.keys()) , len(masterdf['player'].unique()))
+        # print("Player sell record = ",player_sell_record)
     else:
         print("bid price or empty captain name")
         st.session_state.sell_message="Enter correct BID price and select CAPTAIN name."
@@ -367,8 +425,10 @@ if 'fetch_button_enabled' not in st.session_state:
 
 if "sell_message" not in st.session_state:
     st.session_state.sell_message =" "
-# if "emoji" not in st.session_state:
-#     st.session_state.emoji=" "
+if 'sell_condition' not in st.session_state:
+    st.session_state.sell_condition = True
+if 'wallet_exceeded_captains' not in st.session_state:
+    st.session_state.wallet_exceeded_captains = []
 
 # Sidebar with containers
 with st.sidebar:
@@ -383,7 +443,15 @@ with st.sidebar:
             # st.session_state.price_input = st.text_input('ENTER BID PRICE',value='',placeholder="$$$$")
             st.session_state.price_input = st.text_input('BIDDING PRICE',value='',placeholder="$$$$", key="widget")
         with captain_col:
-            st.session_state.captain_choice = st.selectbox(label ='CAPTAIN NAME', options=captainNames,key="selection_reset")
+            masterdf = pd.read_csv('masterdf.csv')      
+            df=masterdf[['captain','player']].groupby(['captain']).count().reset_index()
+            captain_drop_down_list=list(df[df['player']==numberOfPlayers]['captain'].values)
+            captain_drop_down_list= list(set(captainNames)-(set(captain_drop_down_list)))
+            captain_drop_down_list.remove('None')
+            captain_drop_down_list.sort()
+            captain_drop_down_list=['None']+captain_drop_down_list
+            # print('wallet exeeded captain=',captain_drop_down_list)
+            st.session_state.captain_choice = st.selectbox(label ='CAPTAIN NAME', options=captain_drop_down_list,key="selection_reset")
         with sell_col:
             st.session_state.sell_button = st.button('**SELL PLAYER**',on_click=sell_player,disabled=not st.session_state.buttons_enabled or st.session_state.sell_button_clicked)
     # Container 3: UNSOLD button

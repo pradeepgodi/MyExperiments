@@ -75,6 +75,7 @@ def get_new_player():
     with open("players_data.json") as json_file:
         players_data = json.load(json_file)
     enrolled_players= list(players_data.keys())
+
     masterdf = pd.read_csv('masterdf.csv')
     auctioned_players_list = masterdf['player'].unique()
     try:
@@ -291,6 +292,17 @@ def exit_auction():
             file_name = f"{captain}'s_team.csv"
         print("Creating teams =",file_name)
         masterdf[masterdf['captain']==captain].reset_index(drop=True).to_csv(".\\teams\\"+file_name)
+
+    # creating the final wallet table in the end
+    st.session_state.walletdf.reset_index(drop=True).to_csv(".\\teams\\"+"wallet.csv")
+
+    # creating final sold table in the end
+    masterdf = pd.read_csv('masterdf.csv')
+    solddf=masterdf[masterdf['status']=='sold'][['captain','player']]
+    data={}
+    for cap in solddf['captain'].unique():
+        data[cap]=solddf[solddf['captain']==cap]['player'].to_list()
+    pd.DataFrame(data=data).reset_index(drop=True).to_csv(".\\teams\\"+"sold.csv")
 
 
 def crop_image(image):

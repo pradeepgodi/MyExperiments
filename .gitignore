@@ -12,6 +12,8 @@ players_data.json
 run.py
 main.py
 .venv
+demo
+dummy_players
 .venv/Lib/site-packages/numpy-2.1.1-cp312-cp312-win_amd64.whl
 auction/enrolled_players/Aachal Dhar_#66300_8963612394_Intermediate.jpg
 auction/enrolled_players/Aadhya Dave_#70788_7380452554_Advanced.jpg
@@ -172,3 +174,7 @@ auction/enrolled_players/Player2_#456_9886142181_Advanced.JPG
 auction/enrolled_players/Player3_489_8861428932_intermediate.JPG
 auction/enrolled_players/Player4_#9876_88613421_All round.JPG
 auction/structure.txt
+auction/enrolled_players/Player1_#123_8861421832_Beginner.JPG
+auction/enrolled_players/Player2_#456_9886142181_Advanced.JPG
+auction/enrolled_players/Player3_489_8861428932_intermediate.JPG
+auction/enrolled_players/Player4_#9876_88613421_All round.JPG

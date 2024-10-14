@@ -51,9 +51,8 @@ if not os.path.isfile('masterdf.csv'):
     masterdf.to_csv('masterdf.csv',index=False)
 
 # Get the list of Captains, purse value, number of players 
+print(os.name,os.curdir,os.getcwd())
 captaindf = pd.read_csv('\\MyExperiments\\auction\\captains.csv')
-
-
 order_names=list(captaindf['name'])
 order_names.sort()
 captainNames = ['None']+order_names

@@ -8,69 +8,70 @@ import numpy as np
 from PIL import ImageDraw,Image,ExifTags,ImageOps
 
 
+# Constants
+MASTER_DF_CSV = 'masterdf.csv'
+PLAYERS_DATA_JSON = 'players_data.json'
+SOLD_PLAYERS_DIR = 'sold_players'
+UNSOLD_PLAYERS_DIR = 'unsold_players'
+ENROLLED_PLAYERS_DIR = '.\\enrolled_players\\'
+TEAMS_DIR = 'teams'
+WALLET_DF_CSV=f".\\{TEAMS_DIR}\\wallet.csv"
+SOLD_DF_CSV = f".\\{TEAMS_DIR}\\sold_players.csv"
+CAPTAINS_CSV = 'captains.csv'
+DEFAULT_IMAGE = ".\\default_image.jpg"
+
+
 # Styling for Sidebar buttons
-st.markdown("""
-<style>
-    [data-testid=stSidebar] {
-        background-color: #DFFFFF;
-            color: blue; }  
-            
+st.markdown("""<style>[data-testid=stSidebar] {background-color: #DFFFFF; color: blue;}</style>""", unsafe_allow_html=True)
 
-    }
-</style>""", unsafe_allow_html=True)
-
+# Create necessary directories
 def makedir(name):
-    try:
+    if not os.path.exists(name):
         os.makedirs(name)
-        print("created new folder =",name)
-    except OSError:
-        pass    
+        print("Created new folder =", name)
+makedir(SOLD_PLAYERS_DIR)
+makedir(UNSOLD_PLAYERS_DIR)
+makedir(TEAMS_DIR)
 
+def get_date():
+    d=str(datetime.datetime.now())
+    date_string=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
+    return date_string
 
-makedir('sold_players')
-makedir('unsold_players')
-makedir('teams')
+# Create master dataframe/csv to capture all auction activities 
+if not os.path.isfile(MASTER_DF_CSV):
+    master_columns = ['date', 'captain', 'player', 'status', 'price', 'phone', 'wing']
+    pd.DataFrame(columns=master_columns).to_csv(MASTER_DF_CSV, index=False)
 
-# create master dataframe/csv to capture all activities
-if not os.path.isfile('masterdf.csv'):
-    master_columns=['date','captain','player','status','price','phone','wing']
-    masterdf =pd.DataFrame(columns=master_columns)
-    masterdf.to_csv('masterdf.csv',index=False)
-
-# Get the list of Captains, purse value, number of players 
-# print(os.name,os.curdir,os.getcwd())
-
-# captaindf =pd.read_csv('https://raw.githubusercontent.com/pradeepgodi/MyExperiments/refs/heads/main/auction/captains.csv')
-captaindf = pd.read_csv('captains.csv')
-order_names=list(captaindf['name'])
-order_names.sort()
-captainNames = ['None']+order_names
-numberOfPlayers=captaindf['players'][0]
-total_purse_value=int(captaindf['purse'][0])
+# Load captain data purse value, number of players
+captaindf = pd.read_csv(CAPTAINS_CSV)
+order_names = sorted(captaindf['name'].tolist())
+captain_names = ['None'] + order_names
+number_of_players = captaindf['players'].iloc[0]
+total_purse_value = int(captaindf['purse'].iloc[0])
 
 
 # Get the list of all players and dump them into a json file
 st.session_state.players_data={}
-for player in os.listdir(path=".\\enrolled_players"):
+for player in os.listdir(path=ENROLLED_PLAYERS_DIR):
     player_list=player.split('_')
     player_list.append(player)
-    # st.session_state.players_data[player_list[0].upper()]=player_list[1:]  
     st.session_state.players_data[player_list[0]]=player_list[1:]  
 # Convert and write JSON object to file
-with open("players_data.json", "w") as outfile: 
+with open(PLAYERS_DATA_JSON, "w") as outfile: 
     json.dump(st.session_state.players_data, outfile)
 
 # Function to get the new player randomly
 def get_new_player():
-    with open("players_data.json") as json_file:
+    with open(PLAYERS_DATA_JSON) as json_file:
         players_data = json.load(json_file)
     enrolled_players= list(players_data.keys())
 
-    masterdf = pd.read_csv('masterdf.csv')
+    masterdf = pd.read_csv(MASTER_DF_CSV)
     auctioned_players_list = masterdf['player'].unique()
     try:
         player_for_auction=random.choice(list(set(enrolled_players) - set(auctioned_players_list)))
-        print("Player randomly selected for auction = ",player_for_auction,players_data[player_for_auction])
+        print("Player for auction = ",player_for_auction,players_data[player_for_auction])
         return player_for_auction,players_data[player_for_auction]
     except:
         st.warning("All Players are Auctioned.Click on EXIT button.",icon="⚠️")
@@ -81,11 +82,11 @@ def get_new_player():
         st.session_state.fetch_button_enabled=False  
         return False, False
 
-def get_count_of_players_auctioned():
-    auction_pending_players=os.listdir('players')
-    sold_players=os.listdir('sold_players')
-    unsold_players=os.listdir('unsold_players')
-    return auction_pending_players,sold_players,unsold_players
+def display_default_image():
+    st.session_state.image_url= DEFAULT_IMAGE
+    st.session_state.sell_message =""
+    st.session_state.player_name ="Player Name"
+    st.session_state.player_style = "Playing Style" 
 
 # Function Definitions for Button Actions
 def fetch_data():
@@ -97,16 +98,14 @@ def fetch_data():
         st.session_state.player_ph = player_metadata[1]
         st.session_state.player_style = player_metadata[2].split(".")[0]
         
-        st.session_state.image_url = ".\\enrolled_players\\"+ player_metadata[-1]
-        # print("Player image =",st.session_state.image_url)
-        st.session_state.df = pd.DataFrame(columns=captainNames[1:],index=range(numberOfPlayers))
+        st.session_state.image_url = ENROLLED_PLAYERS_DIR + player_metadata[-1]
+        st.session_state.df = pd.DataFrame(columns=captain_names[1:],index=range(number_of_players))
 
         # Reset the previous BID price and captain selection values before new fetching of the players
         st.session_state.price_input = st.session_state.widget
         st.session_state.widget = ""
         st.session_state.selection_reset = 'None'
         st.session_state.sell_message =" "
-        # st.session_state.emoji =" "
 
         # Enable the sell and unsold buttons after fetching data
         st.session_state.buttons_enabled = True
@@ -120,14 +119,11 @@ def fetch_data():
             st.session_state.exit_button_enabled=True
     else:
         # When all players are auctioned display the default image 
-        st.session_state.image_url= ".\\default_image.jpg" 
-        st.session_state.sell_message =" "
-        # st.session_state.emoji =" "
-        st.session_state.player_name ="Player Name"
-        st.session_state.player_style = "Playing Style"     
-
-
-
+        # st.session_state.image_url= DEFAULT_IMAGE 
+        # st.session_state.sell_message =" "
+        # st.session_state.player_name ="Player Name"
+        # st.session_state.player_style = "Playing Style"     
+        display_default_image()
 
 def sell_player():
     # disable sold and unsold button ater clicking once
@@ -136,28 +132,25 @@ def sell_player():
 
     if not (st.session_state.captain_choice =='None' or st.session_state.price_input ==''):
         # # create player records for book keeping
-        d=str(datetime.datetime.now())
-        sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
-        player_sell_record = [ sell_date,st.session_state.captain_choice,
+        # d=str(datetime.datetime.now())
+        # sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
+        player_sell_record = [ get_date(),st.session_state.captain_choice,
                                 st.session_state.player_name,'sold',st.session_state.price_input,
                                 st.session_state.player_ph,st.session_state.player_wing ]
-        masterdf = pd.read_csv('masterdf.csv') 
+        masterdf = pd.read_csv(MASTER_DF_CSV) 
         # # Check wallet if player can be sold to a the captain
         captain_wallet_price_balance=total_purse_value-masterdf[masterdf['captain']==st.session_state.captain_choice]['price'].sum()
         captain_wallet_player_count =masterdf[masterdf['captain']==st.session_state.captain_choice]['player'].count()
-        st.session_state.sell_condition =  (int(st.session_state.price_input) <= int(captain_wallet_price_balance) and (captain_wallet_player_count<numberOfPlayers) )
+        st.session_state.sell_condition =  (int(st.session_state.price_input) <= int(captain_wallet_price_balance) and (captain_wallet_player_count<number_of_players) )
         # print('sell_condition =',st.session_state.sell_condition,captain_wallet_price_balance,captain_wallet_player_count)
         if st.session_state.sell_condition:
-            # print('allowed to bid and purchase')
             print(f"Captain wallet={st.session_state.captain_choice},bal={captain_wallet_price_balance},spent={total_purse_value-captain_wallet_price_balance},player= {captain_wallet_player_count}")
-
             masterdf.loc[len(masterdf.index)] = list(player_sell_record)
-            masterdf.to_csv('masterdf.csv',index=False)
+            masterdf.to_csv(MASTER_DF_CSV,index=False)
             st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
             st.session_state.sell_message = f"Sold to {st.session_state.captain_choice} for {st.session_state.price_input}"
             total_sold_player_count=masterdf[masterdf['status']=='sold'].shape[0]
-            # print('total player sold=',total_sold_player_count)
-            if total_sold_player_count == numberOfPlayers*len(order_names):
+            if total_sold_player_count == number_of_players*len(order_names):
                 st.session_state.exit_button_enabled=True
                 st.session_state.fetch_button_enabled=False
                 st.warning("All Players are Auctioned. Click on EXIT button to wrap up auction.")
@@ -173,19 +166,18 @@ def sell_player():
             st.session_state.walletdf.loc[row_id,'player']=player_count_value
             st.session_state.walletdf.loc[row_id,'balance']=total_purse_value-price_value
 
-            with open("players_data.json") as json_file:
+            with open(PLAYERS_DATA_JSON) as json_file:
                 players_data = json.load(json_file)
             if  len(players_data.keys())==  len(masterdf['player'].unique()):
                 st.session_state.exit_button_enabled=True
             print("Player sell record = ",player_sell_record)
         else:
             print("Captian has exceeded the wallet budget")
-            print(f"Captain={st.session_state.captain_choice},bal={captain_wallet_price_balance},player= {captain_wallet_player_count},purse & player = {total_purse_value} & {numberOfPlayers}")
+            print(f"Captain={st.session_state.captain_choice},bal={captain_wallet_price_balance},player= {captain_wallet_player_count},purse & player = {total_purse_value} & {number_of_players}")
             msg = f"Wallet balance price ={captain_wallet_price_balance} and purchased players ={captain_wallet_player_count}"
             st.session_state.sell_message=f"Wallet exceeded.Don't be greedy {st.session_state.captain_choice}."
             st.session_state.sell_button_clicked = False
             st.session_state.unsold_button_clicked = False
-
             st.session_state.wallet_exceeded_captains.append(st.session_state.captain_choice)
     else:
         print("bid price or empty captain name")
@@ -199,20 +191,19 @@ def unsold_player():
     st.session_state.sell_button_clicked = True
     st.session_state.unsold_button_clicked = True   
     # create player records for book keeping
-    d=str(datetime.datetime.now())
-    sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
-    player_unsell_record = [ sell_date,'None',
+    # d=str(datetime.datetime.now())
+    # sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
+    player_unsell_record = [ get_date(),'None',
                             st.session_state.player_name,'unsold','None',
                             str(st.session_state.player_ph),st.session_state.player_wing ]
     
     st.session_state.sell_message = f"UNSOLD !!!"
-    # st.session_state.emoji = ":disappointed:"
-    masterdf = pd.read_csv('masterdf.csv') 
+    masterdf = pd.read_csv(MASTER_DF_CSV) 
     masterdf.loc[len(masterdf.index)] = list(player_unsell_record)
-    masterdf.to_csv('masterdf.csv',index=False)
+    masterdf.to_csv(MASTER_DF_CSV,index=False)
     st.session_state.players_unsold_count = str(masterdf[masterdf['status']=='unsold']['status'].count())
 
-    with open("players_data.json") as json_file:
+    with open(PLAYERS_DATA_JSON) as json_file:
         players_data = json.load(json_file)
     if  len(players_data.keys())==  len(masterdf['player'].unique()):
         st.session_state.exit_button_enabled=True
@@ -220,50 +211,44 @@ def unsold_player():
 
 def exit_auction():
     # # Move sold and unsold players to separate folders
-    print("clicked on exit button")
-    st.session_state.image_url= ".\\default_image.jpg" 
+    print("Clicked on exit button")
+    st.session_state.image_url= DEFAULT_IMAGE 
     st.session_state.player_name =""
     st.session_state.player_style = "" 
     st.session_state.sell_message =""
     # st.session_state.emoji =""      
-    masterdf = pd.read_csv('masterdf.csv') 
-    with open("players_data.json") as json_file:
+    masterdf = pd.read_csv(MASTER_DF_CSV) 
+    with open(PLAYERS_DATA_JSON) as json_file:
         players_data = json.load(json_file)
-        # print("player_data",players_data)
-
     sold_players=list(masterdf[masterdf['status']=='sold']['player'])
     unsold_players=list(masterdf[masterdf['status']=='unsold']['player'])
     unauctioned_players=list(set(players_data.keys()).difference(set(sold_players).union(set(unsold_players))))
 
     # add unauction player to the master df
-    d=str(datetime.datetime.now())
-    sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
+    # d=str(datetime.datetime.now())
+    # sell_date=d.split(" ")[0] +'_' +d.split(" ")[1].split('.')[0]
     for player in unauctioned_players:
-        unauction_record= [sell_date,'None',player,'unauction',np.nan,str(players_data[player][1]),players_data[player][0]]
-        # print(unauction_record)
+        unauction_record= [get_date(),'None',player,'unauction',np.nan,str(players_data[player][1]),players_data[player][0]]
         masterdf.loc[masterdf.shape[0]]=unauction_record
-    masterdf.to_csv('masterdf.csv',index=False)
+    masterdf.to_csv(MASTER_DF_CSV,index=False)
     print("Sold players" ,len(sold_players),sold_players) 
     print("Unsold players",len(unsold_players),unsold_players) 
     print("Unauctioned players",len(unauctioned_players),unauctioned_players) 
     if len(players_data.keys())>0:       
         for sold in sold_players:
-            # print(players_data[sold][-1])
             image_to_move=players_data[sold][-1]
-            source = ".\\enrolled_players\\"+image_to_move
-            destination=".\\sold_players\\"+image_to_move   
+            source = ENROLLED_PLAYERS_DIR+image_to_move
+            destination=f".\\{SOLD_PLAYERS_DIR}\\{image_to_move}" 
             os.rename(source, destination)                         
         for unsold in unsold_players:
-            # print(players_data[unsold][-1])
             image_to_move=players_data[unsold][-1]
-            source = ".\\enrolled_players\\"+image_to_move
-            destination=".\\unsold_players\\"+image_to_move   
-            os.rename(source, destination)   
+            source = ENROLLED_PLAYERS_DIR+image_to_move
+            destination=f".\\{UNSOLD_PLAYERS_DIR}\\{image_to_move}" 
+            os.rename(source, destination)      
         for unauction in unauctioned_players:
-            # print(players_data[unauction][-1])
             image_to_move=players_data[unauction][-1]
-            source = ".\\enrolled_players\\"+image_to_move
-            destination=".\\unsold_players\\"+image_to_move   
+            source = ENROLLED_PLAYERS_DIR+image_to_move
+            destination=f".\\{UNSOLD_PLAYERS_DIR}\\{image_to_move}"   
             os.rename(source, destination)
 
     st.session_state.exit_button_clicked = True
@@ -276,39 +261,30 @@ def exit_auction():
     # create separate csv files for each captain with his team
     masterdf['captain'].fillna('None',inplace=True)
     for captain in list(set(masterdf['captain'].values)):
-        if captain =='None':
-            file_name = "unsold_players.csv"
-        else:
-            file_name = f"{captain}'s_team.csv"
+        file_name = "unsold_players.csv" if captain == 'None' else f"{captain}'s_team.csv"
         print("Creating teams =",file_name)
-        masterdf[masterdf['captain']==captain].reset_index(drop=True).to_csv(".\\teams\\"+file_name)
-
+        file_path = f".\\{TEAMS_DIR}\\{file_name}"
+        masterdf[masterdf['captain']==captain].reset_index(drop=True).to_csv(file_path)
     # creating the final wallet table in the end
-    st.session_state.walletdf.reset_index(drop=True).to_csv(".\\teams\\"+"wallet.csv")
-
+    st.session_state.walletdf.reset_index(drop=True).to_csv(WALLET_DF_CSV)
     # creating final sold table in the end
-    masterdf = pd.read_csv('masterdf.csv')
+    masterdf = pd.read_csv(MASTER_DF_CSV)
     solddf=masterdf[masterdf['status']=='sold'][['captain','player']]
     data={}
     for cap in solddf['captain'].unique():
         data[cap]=solddf[solddf['captain']==cap]['player'].to_list()
-    pd.DataFrame(data=data).reset_index(drop=True).to_csv(".\\teams\\"+"sold.csv")
+    pd.DataFrame(data=data).reset_index(drop=True).to_csv(SOLD_DF_CSV)
 
 
-def crop_image(image):
-    print("Cropping the image")  
-    image = Image.open(image)
-    new_image = image.resize((1280, 853))
-    # new_image.save('myimage_500.jpg')
-    return new_image
-
+# def crop_image(image):
+#     print("Cropping the image")  
+#     image = Image.open(image)
+#     new_image = image.resize((1280, 853))
+#     return new_image
 
 def resize_image(image, width, height):
-    # print("Resizing the image to ", width, height)
     image_thumbnail = image.copy()
     image_thumbnail.thumbnail((width, height))
-    # print(f"The image re-sized to = {image_thumbnail.size}.")
-
     return image_thumbnail
       
 def potrait_image_orientation(image):
@@ -334,13 +310,13 @@ def potrait_image_orientation(image):
 
 # Initialize session state for dynamic elements
 if 'df' not in st.session_state:
-    st.session_state.df = pd.DataFrame(columns=captainNames[1:],index=range(numberOfPlayers))
+    st.session_state.df = pd.DataFrame(columns=captain_names[1:],index=range(number_of_players))
 if 'unsolddf' not in st.session_state:
-    masterdf = pd.read_csv('masterdf.csv')  
+    masterdf = pd.read_csv(MASTER_DF_CSV)  
     st.session_state.unsolddf =masterdf[(masterdf['status']=='unsold') | (masterdf['status']=='unauction')][['date', 'player', 'phone', 'wing']].reset_index(drop=True)
 if 'walletdf' not in st.session_state:
     if masterdf.empty:
-        walletdf = pd.DataFrame(data={'captain':captainNames[1:]})
+        walletdf = pd.DataFrame(data={'captain':captain_names[1:]})
         walletdf[['balance']]=[total_purse_value]
         walletdf[['spent']]=[0]
         walletdf[['player']]=[0]
@@ -352,14 +328,14 @@ if 'walletdf' not in st.session_state:
         walletdf['balance'] = total_purse_value - walletdf['price']
         walletdf.rename(columns={'price':'spent'},inplace=True)
         walletdf=walletdf[['captain', 'balance','spent', 'player']]
-        name_diff=list(set(captainNames[1:])-set(walletdf['captain'].values))
+        name_diff=list(set(captain_names[1:])-set(walletdf['captain'].values))
         df3 = pd.DataFrame(data={'captain':name_diff})
         df3[['balance']]=[total_purse_value]
         df3[['spent']]=[0]
         df3[['player']]=[0]
         st.session_state.walletdf=pd.concat([walletdf,df3])
 if 'players_sold_count' not in st.session_state:
-    masterdf = pd.read_csv('masterdf.csv')  
+    masterdf = pd.read_csv(MASTER_DF_CSV)  
     st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
 if 'players_unsold_count' not in st.session_state:
     st.session_state.players_unsold_count = str(masterdf[masterdf['status']=='unsold']['status'].count())
@@ -369,7 +345,7 @@ if 'auction_pending_count' not in st.session_state:
     st.session_state.auction_pending_count = str((len(list(st.session_state.players_data.keys())) - (int(st.session_state.players_sold_count)+int(st.session_state.players_unsold_count))))   
 if 'image_url' not in st.session_state:
     # Set default image (dummy image) when the app first loads
-    st.session_state.image_url = ".\\default_image.jpg" 
+    st.session_state.image_url = DEFAULT_IMAGE 
 if 'player_name' not in st.session_state:
     st.session_state.player_name = "Player Name"
 if 'player_style' not in st.session_state:
@@ -397,6 +373,8 @@ if 'sell_condition' not in st.session_state:
     st.session_state.sell_condition = True
 if 'wallet_exceeded_captains' not in st.session_state:
     st.session_state.wallet_exceeded_captains = []
+if 'log_df' not in st.session_state:
+    st.session_state.log_df = pd.read_csv(MASTER_DF_CSV)      
 
 # Sidebar with containers
 with st.sidebar:
@@ -409,10 +387,10 @@ with st.sidebar:
         with price_col:
             st.session_state.price_input = st.text_input('BIDDING PRICE',value='',placeholder="$$$$", key="widget")
         with captain_col:
-            masterdf = pd.read_csv('masterdf.csv')      
+            masterdf = pd.read_csv(MASTER_DF_CSV)      
             df=masterdf[['captain','player']].groupby(['captain']).count().reset_index()
-            captain_drop_down_list=list(df[df['player']==numberOfPlayers]['captain'].values)
-            captain_drop_down_list= list(set(captainNames)-(set(captain_drop_down_list)))
+            captain_drop_down_list=list(df[df['player']==number_of_players]['captain'].values)
+            captain_drop_down_list= list(set(captain_names)-(set(captain_drop_down_list)))
             captain_drop_down_list.remove('None')
             captain_drop_down_list.sort()
             captain_drop_down_list=['None']+captain_drop_down_list
@@ -449,19 +427,17 @@ with st.sidebar:
     st.text("Developed by Pradeep Godi")
 
 # Main Page Layout with Tabs
-player_tab, sold_tab,unslod_tab,wallet_tab = st.tabs(["Player Profile", "Sold","Unsold","Wallet"])
+player_tab, sold_tab,unslod_tab,wallet_tab,log_tab = st.tabs(["Player Profile", "Sold","Unsold","Wallet","Log"])
 with player_tab:
     #check imgae orientation
     ref_image = Image.open(st.session_state.image_url)
     oriented_image,orientation_corrected=potrait_image_orientation(ref_image)
     if orientation_corrected:
-        display_image= oriented_image
+        # display_image= oriented_image
         display_image=resize_image(oriented_image,1280,853)
     else:
         display_image=resize_image(oriented_image,1280,853)
         display_image=st.session_state.image_url
-    # print("Corrected Image size after  = ",display_image.size)
-    # display_image=crop_image(oriented_image)    
     st.image(display_image, use_column_width=True)
     player_col, sell_msg_col = st.columns([1,1])
     with player_col:
@@ -472,11 +448,11 @@ with player_tab:
 with sold_tab:
     # Table Tab: Display the sold players DataFrame
     if not st.session_state.df.empty:
-        masterdf = pd.read_csv('masterdf.csv')   
-        for captain_name in captainNames:
+        masterdf = pd.read_csv(MASTER_DF_CSV)   
+        for captain_name in captain_names:
             if captain_name !='None':
                 player_list=list(masterdf[(masterdf['captain']==captain_name) & (masterdf['status']=='sold')]['player'])
-                player_list=player_list + ([np.nan] * (numberOfPlayers - len(player_list)))
+                player_list=player_list + ([np.nan] * (number_of_players - len(player_list)))
                 st.session_state.df[captain_name]=player_list
         col_order=list(set(masterdf['captain'].values))
         st.dataframe(st.session_state.df, use_container_width=True,hide_index=False)       
@@ -487,12 +463,12 @@ with unslod_tab:
     # Table Tab: Display the unsold players DataFrame
     with st.container(border=True):
         if not st.session_state.unsolddf.empty:
-            masterdf = pd.read_csv('masterdf.csv')
+            masterdf = pd.read_csv(MASTER_DF_CSV)
             masterdf['phone']=masterdf['phone'].astype('string')
-            st.session_state.unsolddf =masterdf[(masterdf['status']=='unsold') | (masterdf['status']=='unauction')][['date', 'player', 'phone', 'wing']].reset_index(drop=True)
+            st.session_state.unsolddf =masterdf[(masterdf['status']=='unsold') | (masterdf['status']=='unauction')][['player', 'phone', 'wing']].reset_index(drop=True)
             st.dataframe(st.session_state.unsolddf, use_container_width=True,hide_index=False,column_config={"phone": st.column_config.TextColumn("phone",default="st.")})      
         else:
-            st.session_state.unsolddf = masterdf[masterdf['status']=='unsold'][['date', 'player', 'phone', 'wing']].reset_index(drop=True)
+            st.session_state.unsolddf = masterdf[masterdf['status']=='unsold'][['player', 'phone', 'wing']].reset_index(drop=True)
             st.dataframe(st.session_state.unsolddf, use_container_width=True,hide_index=False,column_config={"phone": st.column_config.TextColumn("phone",default="st.")})      
             # st.write("No data to display. Click FETCH to load data.")
 with wallet_tab:
@@ -502,5 +478,10 @@ with wallet_tab:
             st.dataframe(st.session_state.walletdf.sort_values(by='captain'),use_container_width=True,hide_index=True)
         else:
             st.write("No data to display. Click FETCH to load data.")
+with log_tab:
+    # Log Tab: Display the log file 
+    with st.container(border=True):
+        st.session_state.log_df = pd.read_csv(MASTER_DF_CSV)
+        st.dataframe(st.session_state.log_df[['date', 'captain','player', 'status', 'price']].sort_values(by='date',ascending=False),use_container_width=True,hide_index=True)
 
 

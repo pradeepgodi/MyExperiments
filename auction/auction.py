@@ -6,7 +6,6 @@ import random
 import datetime
 import numpy as np
 from PIL import ImageDraw,Image,ExifTags,ImageOps
-import requests
 
 
 # Constants
@@ -14,23 +13,12 @@ MASTER_DF_CSV = 'masterdf.csv'
 PLAYERS_DATA_JSON = 'players_data.json'
 SOLD_PLAYERS_DIR = 'sold_players'
 UNSOLD_PLAYERS_DIR = 'unsold_players'
-# try:
 ENROLLED_PLAYERS_DIR = '.\\enrolled_players\\'
-# except:
-    # print("Enrolled players directory not found. Downloading from GitHub")
-    # ENROLLED_PLAYERS_DIR="https://github.com/pradeepgodi/MyExperiments/tree/main/auction/enrolled_players"    
 TEAMS_DIR = 'teams'
 WALLET_DF_CSV=f".\\{TEAMS_DIR}\\wallet.csv"
 SOLD_DF_CSV = f".\\{TEAMS_DIR}\\sold_players.csv"
 CAPTAINS_CSV = 'captains.csv'
-
-# try:
-    # DEFAULT_IMAGE = ".\\default_image.jpg"
-    # DEFAULT_IMAGE = './/default_image.jpg'
-# except:
-    # print("Default image not found. Downloading from GitHub")
-DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/enrolled_players/Player1_%23123_8861421832_Beginner.JPG'
-
+DEFAULT_IMAGE = ".\\default_image.jpg"
 
 
 # Styling for Sidebar buttons
@@ -44,9 +32,6 @@ def makedir(name):
 makedir(SOLD_PLAYERS_DIR)
 makedir(UNSOLD_PLAYERS_DIR)
 makedir(TEAMS_DIR)
-makedir(ENROLLED_PLAYERS_DIR)
-
-# DEFAULT_IMAGE=os.listdir(ENROLLED_PLAYERS_DIR)[0]
 
 def get_date():
     d=str(datetime.datetime.now())
@@ -59,11 +44,7 @@ if not os.path.isfile(MASTER_DF_CSV):
     pd.DataFrame(columns=master_columns).to_csv(MASTER_DF_CSV, index=False)
 
 # Load captain data purse value, number of players
-try:
-    captaindf = pd.read_csv(CAPTAINS_CSV)
-except:
-    print("Captain data not found. Downloading from GitHub")
-    captaindf =pd.read_csv('https://raw.githubusercontent.com/pradeepgodi/MyExperiments/refs/heads/main/auction/captains.csv')    
+captaindf = pd.read_csv(CAPTAINS_CSV)
 order_names = sorted(captaindf['name'].tolist())
 captain_names = ['None'] + order_names
 number_of_players = captaindf['players'].iloc[0]
@@ -231,12 +212,11 @@ def unsold_player():
 def exit_auction():
     # # Move sold and unsold players to separate folders
     print("Clicked on exit button")
-    # st.session_state.image_url= DEFAULT_IMAGE 
-    # st.session_state.player_name =""
-    # st.session_state.player_style = "" 
-    # st.session_state.sell_message =""
-    # st.session_state.emoji =""
-    display_default_image()      
+    st.session_state.image_url= DEFAULT_IMAGE 
+    st.session_state.player_name =""
+    st.session_state.player_style = "" 
+    st.session_state.sell_message =""
+    # st.session_state.emoji =""      
     masterdf = pd.read_csv(MASTER_DF_CSV) 
     with open(PLAYERS_DATA_JSON) as json_file:
         players_data = json.load(json_file)
@@ -450,9 +430,7 @@ with st.sidebar:
 player_tab, sold_tab,unslod_tab,wallet_tab,log_tab = st.tabs(["Player Profile", "Sold","Unsold","Wallet","Log"])
 with player_tab:
     #check imgae orientation
-    print("Image used = ",st.session_state.image_url)
     ref_image = Image.open(st.session_state.image_url)
-    # ref_image = Image.open( requests.get(st.session_state.image_url, stream=True).raw)
     oriented_image,orientation_corrected=potrait_image_orientation(ref_image)
     if orientation_corrected:
         # display_image= oriented_image

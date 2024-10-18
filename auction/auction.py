@@ -446,6 +446,7 @@ with st.sidebar:
 player_tab, sold_tab,unslod_tab,wallet_tab,log_tab = st.tabs(["Player Profile", "Sold","Unsold","Wallet","Log"])
 with player_tab:
     #check imgae orientation
+    print("Image used = ",st.session_state.image_url)
     ref_image = Image.open(st.session_state.image_url)
     oriented_image,orientation_corrected=potrait_image_orientation(ref_image)
     if orientation_corrected:

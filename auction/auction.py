@@ -13,10 +13,11 @@ MASTER_DF_CSV = 'masterdf.csv'
 PLAYERS_DATA_JSON = 'players_data.json'
 SOLD_PLAYERS_DIR = 'sold_players'
 UNSOLD_PLAYERS_DIR = 'unsold_players'
-try:
-    ENROLLED_PLAYERS_DIR = '.\\enrolled_players\\'
-except:
-    ENROLLED_PLAYERS_DIR="https://github.com/pradeepgodi/MyExperiments/tree/main/auction/enrolled_players"    
+# try:
+ENROLLED_PLAYERS_DIR = '.\\enrolled_players\\'
+# except:
+    # print("Enrolled players directory not found. Downloading from GitHub")
+    # ENROLLED_PLAYERS_DIR="https://github.com/pradeepgodi/MyExperiments/tree/main/auction/enrolled_players"    
 TEAMS_DIR = 'teams'
 WALLET_DF_CSV=f".\\{TEAMS_DIR}\\wallet.csv"
 SOLD_DF_CSV = f".\\{TEAMS_DIR}\\sold_players.csv"
@@ -25,6 +26,7 @@ CAPTAINS_CSV = 'captains.csv'
 try:
     DEFAULT_IMAGE = ".\\default_image.jpg"
 except:
+    print("Default image not found. Downloading from GitHub")
     DEFAULT_IMAGE ="https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg"
 
 
@@ -39,6 +41,7 @@ def makedir(name):
 makedir(SOLD_PLAYERS_DIR)
 makedir(UNSOLD_PLAYERS_DIR)
 makedir(TEAMS_DIR)
+makedir(ENROLLED_PLAYERS_DIR)
 
 def get_date():
     d=str(datetime.datetime.now())

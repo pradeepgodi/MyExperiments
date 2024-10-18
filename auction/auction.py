@@ -23,11 +23,12 @@ WALLET_DF_CSV=f".\\{TEAMS_DIR}\\wallet.csv"
 SOLD_DF_CSV = f".\\{TEAMS_DIR}\\sold_players.csv"
 CAPTAINS_CSV = 'captains.csv'
 
-# try:
-#     DEFAULT_IMAGE = ".\\default_image.jpg"
-# except:
-#     print("Default image not found. Downloading from GitHub")
-DEFAULT_IMAGE ="https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg"
+try:
+    # DEFAULT_IMAGE = ".\\default_image.jpg"
+    DEFAULT_IMAGE = "default_image.jpg"
+except:
+    print("Default image not found. Downloading from GitHub")
+    DEFAULT_IMAGE ="https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg"
 
 
 # Styling for Sidebar buttons
@@ -226,11 +227,12 @@ def unsold_player():
 def exit_auction():
     # # Move sold and unsold players to separate folders
     print("Clicked on exit button")
-    st.session_state.image_url= DEFAULT_IMAGE 
-    st.session_state.player_name =""
-    st.session_state.player_style = "" 
-    st.session_state.sell_message =""
-    # st.session_state.emoji =""      
+    # st.session_state.image_url= DEFAULT_IMAGE 
+    # st.session_state.player_name =""
+    # st.session_state.player_style = "" 
+    # st.session_state.sell_message =""
+    # st.session_state.emoji =""
+    display_default_image()      
     masterdf = pd.read_csv(MASTER_DF_CSV) 
     with open(PLAYERS_DATA_JSON) as json_file:
         players_data = json.load(json_file)

@@ -13,12 +13,19 @@ MASTER_DF_CSV = 'masterdf.csv'
 PLAYERS_DATA_JSON = 'players_data.json'
 SOLD_PLAYERS_DIR = 'sold_players'
 UNSOLD_PLAYERS_DIR = 'unsold_players'
-ENROLLED_PLAYERS_DIR = '.\\enrolled_players\\'
+try:
+    ENROLLED_PLAYERS_DIR = '.\\enrolled_players\\'
+except:
+    ENROLLED_PLAYERS_DIR="https://github.com/pradeepgodi/MyExperiments/tree/main/auction/enrolled_players"    
 TEAMS_DIR = 'teams'
 WALLET_DF_CSV=f".\\{TEAMS_DIR}\\wallet.csv"
 SOLD_DF_CSV = f".\\{TEAMS_DIR}\\sold_players.csv"
 CAPTAINS_CSV = 'captains.csv'
-DEFAULT_IMAGE = ".\\default_image.jpg"
+
+try:
+    DEFAULT_IMAGE = ".\\default_image.jpg"
+except:
+    DEFAULT_IMAGE ="https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg"
 
 
 # Styling for Sidebar buttons
@@ -44,7 +51,11 @@ if not os.path.isfile(MASTER_DF_CSV):
     pd.DataFrame(columns=master_columns).to_csv(MASTER_DF_CSV, index=False)
 
 # Load captain data purse value, number of players
-captaindf = pd.read_csv(CAPTAINS_CSV)
+try:
+    captaindf = pd.read_csv(CAPTAINS_CSV)
+except:
+    print("Captain data not found. Downloading from GitHub")
+    captaindf =pd.read_csv('https://raw.githubusercontent.com/pradeepgodi/MyExperiments/refs/heads/main/auction/captains.csv')    
 order_names = sorted(captaindf['name'].tolist())
 captain_names = ['None'] + order_names
 number_of_players = captaindf['players'].iloc[0]

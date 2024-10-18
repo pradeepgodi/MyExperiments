@@ -29,7 +29,7 @@ CAPTAINS_CSV = 'captains.csv'
     # DEFAULT_IMAGE = './/default_image.jpg'
 # except:
     # print("Default image not found. Downloading from GitHub")
-DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg'
+# DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg'
 
 
 
@@ -45,6 +45,8 @@ makedir(SOLD_PLAYERS_DIR)
 makedir(UNSOLD_PLAYERS_DIR)
 makedir(TEAMS_DIR)
 makedir(ENROLLED_PLAYERS_DIR)
+
+DEFAULT_IMAGE=os.listdir(ENROLLED_PLAYERS_DIR)[0]
 
 def get_date():
     d=str(datetime.datetime.now())
@@ -449,8 +451,8 @@ player_tab, sold_tab,unslod_tab,wallet_tab,log_tab = st.tabs(["Player Profile", 
 with player_tab:
     #check imgae orientation
     print("Image used = ",st.session_state.image_url)
-    # ref_image = Image.open(st.session_state.image_url)
-    ref_image = Image.open( requests.get(st.session_state.image_url, stream=True).raw)
+    ref_image = Image.open(st.session_state.image_url)
+    # ref_image = Image.open( requests.get(st.session_state.image_url, stream=True).raw)
     oriented_image,orientation_corrected=potrait_image_orientation(ref_image)
     if orientation_corrected:
         # display_image= oriented_image

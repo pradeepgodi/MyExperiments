@@ -29,7 +29,7 @@ CAPTAINS_CSV = 'captains.csv'
     # DEFAULT_IMAGE = './/default_image.jpg'
 # except:
     # print("Default image not found. Downloading from GitHub")
-# DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg'
+DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/enrolled_players/Player1_%23123_8861421832_Beginner.JPG'
 
 
 
@@ -46,7 +46,7 @@ makedir(UNSOLD_PLAYERS_DIR)
 makedir(TEAMS_DIR)
 makedir(ENROLLED_PLAYERS_DIR)
 
-DEFAULT_IMAGE=os.listdir(ENROLLED_PLAYERS_DIR)[0]
+# DEFAULT_IMAGE=os.listdir(ENROLLED_PLAYERS_DIR)[0]
 
 def get_date():
     d=str(datetime.datetime.now())

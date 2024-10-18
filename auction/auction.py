@@ -23,12 +23,12 @@ WALLET_DF_CSV=f".\\{TEAMS_DIR}\\wallet.csv"
 SOLD_DF_CSV = f".\\{TEAMS_DIR}\\sold_players.csv"
 CAPTAINS_CSV = 'captains.csv'
 
-try:
+# try:
     # DEFAULT_IMAGE = ".\\default_image.jpg"
-    DEFAULT_IMAGE = './/default_image.jpg'
-except:
-    print("Default image not found. Downloading from GitHub")
-    DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg'
+    # DEFAULT_IMAGE = './/default_image.jpg'
+# except:
+    # print("Default image not found. Downloading from GitHub")
+DEFAULT_IMAGE ='https://github.com/pradeepgodi/MyExperiments/blob/main/auction/default_image.jpg'
 
 
 # Styling for Sidebar buttons

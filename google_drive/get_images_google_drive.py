@@ -14,7 +14,6 @@ def makedir(name):
         # print("Created new folder =", name)
 makedir("enrolled_players")
 
-# os.makedirs(os.path.dirname("enrolled_players"), exist_ok=True)
 
 # Define the required scopes for accessing Google Drive
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -44,10 +43,8 @@ def download_file_from_drive(drive_url, output_file_path):
     # Extract the file ID from the Google Drive URL
     file_id = extract_file_id(drive_url)
     print(f"Extracted file ID: {file_id}")
-
     # Request to download the file
     request = service.files().get_media(fileId=file_id)
-
     # Create a file handle for the output file
     with io.FileIO(output_file_path, 'wb') as file_handle:
         downloader = MediaIoBaseDownload(file_handle, request)
@@ -55,7 +52,6 @@ def download_file_from_drive(drive_url, output_file_path):
         while not done:
             status, done = downloader.next_chunk()
             print(f"Download progress: {int(status.progress() * 100)}%")
-
     print(f"File downloaded successfully and saved to {output_file_path}")
 
 # Replace with your Google Drive file URL

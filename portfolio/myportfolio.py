@@ -70,8 +70,8 @@ my_holdings['invested %'] =np.round((my_holdings['Qty.']* my_holdings['Avg. cost
 investment_df=my_holdings[['Instrument','sector','total_invested',  'Cur. val', 'P&L','invested %']].sort_values(by='total_invested',ascending=False).reset_index(drop=True)
 sector_invst_df=investment_df.groupby('sector').sum('total_invested').sort_values(by=['P&L','invested %'],ascending=False).reset_index(drop=False)
 
-print(sector_invst_df)
-print(investment_df)
+# print(sector_invst_df)
+# print(investment_df)
 
 # Stocks that are above 52 Week High
 ## "Above 52w" Coloumn , +ve numbers mean that stock is above is 52w high and sellable
@@ -82,7 +82,7 @@ yesno=["YES" if v>0 else "NO" for v in list(my_holdings['Above 52w']) ]
 my_holdings.insert(len(my_holdings.columns),"Any Above 52w",yesno)
 wk52_high_df=my_holdings[my_holdings['P&L']>0][['Instrument','sector', 'Qty.','P&L', 'LTP', 'High 52w price', 'Above 52w','Any Above 52w']].sort_values(by='Above 52w',ascending=False)
 wk52_high_df.reset_index(drop=True,inplace=True)    
-print(wk52_high_df)
+# print(wk52_high_df)
 
 
 # Stocks that are Below 52 Week Low , to check if the stocks that have gone really bad
@@ -92,7 +92,7 @@ yesno1=["YES" if v<0 else "NO" for v in list(my_holdings['Below 52w']) ]
 my_holdings.insert(len(my_holdings.columns),"Any Below 52w",yesno1)
 wk52_low_df=my_holdings[['Instrument','sector', 'Qty.','P&L', 'LTP', 'Low 52w price', 'Below 52w','Any Below 52w']].sort_values(by='Below 52w',ascending=True)
 wk52_low_df.reset_index(drop=True,inplace=True)
-print(wk52_low_df)
+# print(wk52_low_df)
 
 # # Top gainers ##
 # headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"}

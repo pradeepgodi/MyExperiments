@@ -20,29 +20,27 @@ def display_dataframe(df):
     st.dataframe(df,use_container_width=True)
 
 # Define tabs
-sector_tab, investment_tab, wk52_high_tab, wk52_low_tab= st.tabs(["Invested Sector Breakdown", "Invested Amount %", "52 week high", "52 week low"])
+sector_tab, investment_tab,sector_gain_tab,sector_gain_per_tab, wk52_high_tab, wk52_low_tab= st.tabs(["Investement by Sector", "Stocks", "Sector P&L", "Sector P&L %","52 week high", "52 week low"])
 with sector_tab:
-    # Check if the DataFrame has any numeric columns to create a pie chart
-    if not mp.sector_invst_df.empty:  
-        st.spinner('Loading Sector Breakdown...')
-        pie_data = mp.sector_invst_df['total_invested'].value_counts().index.to_list()
-        fig, ax = plt.subplots()
-        ax.pie(pie_data, labels=mp.sector_invst_df['sector'], autopct='%1.1f%%', startangle=90)
-        ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        st.pyplot(fig)
-    else:
-        st.write("Please upload a CSV file to display data.")
+    with st.container(border=True):
+        st.pyplot(mp.sector_invst_table())
 
 with investment_tab:
     with st.container(border=True):
         st.spinner('Loading Invested Amount...')
         display_dataframe(mp.investment_df)
-        # st.dataframe(mp.investment_df,use_container_width=True)
+
+with sector_gain_tab:
+    with st.container(border=True):
+        display_dataframe(mp.sector_invst_gain_df)
+
+with sector_gain_per_tab:
+    with st.container(border=True):
+        st.pyplot(mp.sector_invst_gain_bar_chart())
 
 with wk52_high_tab:
     st.spinner('Loading 52 week high...')
     display_dataframe(mp.wk52_high_df)
-    # st.dataframe(mp.wk52_high_df,use_container_width=True)
 
 with wk52_low_tab:
     st.spinner('Loading 52 week low...')

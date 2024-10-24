@@ -6,6 +6,7 @@ import jugaad_data as jd
 import streamlit as st
 from jugaad_data.nse import NSELive
 import warnings; warnings.simplefilter('ignore')
+import matplotlib.pyplot as plt
 
 
 n = NSELive()
@@ -65,13 +66,77 @@ my_holdings['Cur. val']= my_holdings['Qty.'] * my_holdings['LTP']
 my_holdings['P&L'] = (my_holdings['Qty.'] * my_holdings['LTP'] ) - ( my_holdings['Qty.'] * my_holdings['Avg. cost'])
 total_invested=np.matmul(my_holdings['Qty.'], my_holdings['Avg. cost'])
 my_holdings['total_invested']=my_holdings['Qty.']* my_holdings['Avg. cost']
+my_holdings['P&L %'] =np.round(my_holdings['P&L']/(my_holdings['Qty.']* my_holdings['Avg. cost']) * 100,2)
 my_holdings['invested %'] =np.round((my_holdings['Qty.']* my_holdings['Avg. cost'])/total_invested * 100,2)
 
-investment_df=my_holdings[['Instrument','sector','total_invested',  'Cur. val', 'P&L','invested %']].sort_values(by='total_invested',ascending=False).reset_index(drop=True)
+investment_df=my_holdings[['Instrument','sector','total_invested',  'Cur. val', 'P&L','P&L %','invested %']].sort_values(by='total_invested',ascending=False).reset_index(drop=True)
 sector_invst_df=investment_df.groupby('sector').sum('total_invested').sort_values(by=['P&L','invested %'],ascending=False).reset_index(drop=False)
 
 # print(sector_invst_df)
 # print(investment_df)
+
+def sector_invst_table():
+    # Sort the dataframe by 'invested %'
+    sector_invst_df_sorted = sector_invst_df.sort_values(by='invested %', ascending=True)
+    # Extract the sorted sector names and invested values
+    sector_names = sector_invst_df_sorted['sector']
+    invested_values = sector_invst_df_sorted['invested %']
+    # Create the figure and axis
+    fig, ax = plt.subplots()
+    # Create a horizontal bar plot
+    bar_container = ax.barh(sector_names, invested_values, height=0.6)  # Reduce height for spacing
+    # Add labels to the bars
+    # ax.bar_label(bar_container, fmt=lambda x: f'{x * 1:.1f} %', padding=3)  # Add padding for better readability
+    ax.bar_label(bar_container)  # Add padding for better readability
+    # Set the x-axis label
+    ax.set_xlabel('%')
+    ax.set_xlim(0, invested_values.max() * 1.1)  # Increase limit by 10%
+    return plt
+
+
+
+# Sector wise P&L
+sector_pl_df=investment_df[['Instrument','sector', 'total_invested', 'Cur. val', 'P&L']].groupby('sector').agg({'total_invested':'sum','Cur. val':'sum','P&L':'sum','Instrument':'count'}).reset_index(drop=False)
+sector_pl_df['P&L %']=np.round((sector_pl_df['P&L'] / sector_pl_df['total_invested'] ) * 100,2)
+sector_pl_df=sector_pl_df.sort_values(by='P&L %',ascending=False).reset_index(drop=True)
+# print(sector_pl_df)
+
+# Sector wise invested % and P&L %
+sector_invst_gain_df=sector_pl_df.merge(sector_invst_df,on=['sector'], how='inner')
+# print(sector_invst_gain_df.columns)
+sector_invst_gain_df=sector_invst_gain_df[['sector', 'Instrument','P&L %_x', 'invested %']]
+sector_invst_gain_df.rename(columns={'P&L %_x':'P&L %'},inplace=True)
+# print(sector_invst_gain_df)
+
+# bar graph for sector wise investment and P&L %
+def sector_invst_gain_bar_chart():
+    sector_name = sector_invst_gain_df['sector'].values
+    category = {
+        'Invested (%)': sector_invst_gain_df['invested %'].values,
+        'P&L (%)': sector_invst_gain_df['P&L %'].values,
+    }
+    x = np.arange(len(sector_name)) * 2  # Multiply by 2 to increase spacing between groups
+    width = 0.3  # Bar width
+    multiplier = 0
+    # Set the figsize to increase the chart size (width, height)
+    fig, ax = plt.subplots(figsize=(12, 8), layout='constrained')  # Adjust as needed
+    # Adjust spacing between bars within the same group
+    spacing_factor_within = 1.5  # increase this value to add more space between bars
+    for attribute, measurement in category.items():
+        offset = width * multiplier * spacing_factor_within
+        # Add edgecolor to give demarcation between bars
+        rects = ax.bar(x + offset, measurement, width, label=attribute, edgecolor='black')
+        ax.bar_label(rects, padding=3)
+        multiplier += 1
+    # Add some text for labels, title, and custom x-axis tick labels
+    # ax.set_ylabel('% Change')
+    ax.set_title('Investment and P&L by Sector')
+    ax.set_xticks(x + width / 2 * spacing_factor_within)
+    ax.set_xticklabels(sector_name, rotation=90)  # Rotating the labels vertically
+    ax.legend(loc='upper right')
+    return plt    
+
+
 
 # Stocks that are above 52 Week High
 ## "Above 52w" Coloumn , +ve numbers mean that stock is above is 52w high and sellable
@@ -80,7 +145,8 @@ my_holdings.insert(len(my_holdings.columns),"Low 52w price",low_52w_list)
 my_holdings['Above 52w']= my_holdings['LTP']- my_holdings['High 52w price']
 yesno=["YES" if v>0 else "NO" for v in list(my_holdings['Above 52w']) ]
 my_holdings.insert(len(my_holdings.columns),"Any Above 52w",yesno)
-wk52_high_df=my_holdings[my_holdings['P&L']>0][['Instrument','sector', 'Qty.','P&L', 'LTP', 'High 52w price', 'Above 52w','Any Above 52w']].sort_values(by='Above 52w',ascending=False)
+# wk52_high_df=my_holdings[my_holdings['P&L']>0][['Instrument','sector', 'Qty.','P&L', 'LTP', 'High 52w price', 'Above 52w','Any Above 52w']].sort_values(by='Above 52w',ascending=False)
+wk52_high_df=my_holdings[my_holdings['P&L']>0][['Instrument','Qty.','P&L', 'LTP', 'High 52w price', 'Above 52w','Any Above 52w']].sort_values(by='Above 52w',ascending=False)
 wk52_high_df.reset_index(drop=True,inplace=True)    
 # print(wk52_high_df)
 
@@ -90,7 +156,7 @@ wk52_high_df.reset_index(drop=True,inplace=True)
 my_holdings['Below 52w']=   my_holdings['LTP'] - my_holdings['Low 52w price']
 yesno1=["YES" if v<0 else "NO" for v in list(my_holdings['Below 52w']) ]
 my_holdings.insert(len(my_holdings.columns),"Any Below 52w",yesno1)
-wk52_low_df=my_holdings[['Instrument','sector', 'Qty.','P&L', 'LTP', 'Low 52w price', 'Below 52w','Any Below 52w']].sort_values(by='Below 52w',ascending=True)
+wk52_low_df=my_holdings[['Instrument','Qty.','P&L', 'LTP', 'Low 52w price', 'Below 52w','Any Below 52w']].sort_values(by='Below 52w',ascending=True)
 wk52_low_df.reset_index(drop=True,inplace=True)
 # print(wk52_low_df)
 

@@ -110,30 +110,47 @@ sector_invst_gain_df.rename(columns={'P&L %_x':'P&L %'},inplace=True)
 
 # bar graph for sector wise investment and P&L %
 def sector_invst_gain_bar_chart():
+    # Extract data from the DataFrame
     sector_name = sector_invst_gain_df['sector'].values
+    invested_percent = sector_invst_gain_df['invested %'].values
+    pl_percent = sector_invst_gain_df['P&L %'].values
+
+    # Sort by 'Invested (%)' or 'P&L (%)'
+    sorted_indices = np.argsort(pl_percent)  # Sort by 'Invested (%)' (or pl_percent for P&L sorting)
+
+    # Re-arrange data based on sorted indices
+    sector_name = sector_name[sorted_indices]
+    invested_percent = invested_percent[sorted_indices]
+    pl_percent = pl_percent[sorted_indices]
+
     category = {
-        'Invested (%)': sector_invst_gain_df['invested %'].values,
-        'P&L (%)': sector_invst_gain_df['P&L %'].values,
+        'Invested (%)': invested_percent,
+        'P&L (%)': pl_percent,
     }
-    x = np.arange(len(sector_name)) * 2  # Multiply by 2 to increase spacing between groups
-    width = 0.3  # Bar width
+
+    y = np.arange(len(sector_name)) * 2  # Multiply by 2 to increase spacing between groups
+    height = 0.3  # Bar height
     multiplier = 0
+
     # Set the figsize to increase the chart size (width, height)
     fig, ax = plt.subplots(figsize=(12, 8), layout='constrained')  # Adjust as needed
+
     # Adjust spacing between bars within the same group
-    spacing_factor_within = 1.5  # increase this value to add more space between bars
+    spacing_factor_within = 1.5  # Increase this value to add more space between bars
+
     for attribute, measurement in category.items():
-        offset = width * multiplier * spacing_factor_within
+        offset = height * multiplier * spacing_factor_within
         # Add edgecolor to give demarcation between bars
-        rects = ax.bar(x + offset, measurement, width, label=attribute, edgecolor='black')
+        rects = ax.barh(y + offset, measurement, height, label=attribute, edgecolor='black')
         ax.bar_label(rects, padding=3)
         multiplier += 1
-    # Add some text for labels, title, and custom x-axis tick labels
-    # ax.set_ylabel('% Change')
-    ax.set_title('Investment and P&L by Sector')
-    ax.set_xticks(x + width / 2 * spacing_factor_within)
-    ax.set_xticklabels(sector_name, rotation=90)  # Rotating the labels vertically
-    ax.legend(loc='upper right')
+
+    # Add some text for labels, title, and custom y-axis tick labels
+    ax.set_title('Investment and P&L by Sector (Sorted)')
+    ax.set_yticks(y + height / 2 * spacing_factor_within)
+    ax.set_yticklabels(sector_name)
+    ax.legend(loc='center right')
+    ax.set_xlim(0, pl_percent.max() * 1.1)  # Increase limit by 10%
     return plt    
 
 

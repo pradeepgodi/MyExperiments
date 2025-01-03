@@ -144,7 +144,7 @@ def sell_player():
         st.session_state.sell_condition =  (int(st.session_state.price_input) <= int(captain_wallet_price_balance) and (captain_wallet_player_count<number_of_players) )
         # print('sell_condition =',st.session_state.sell_condition,captain_wallet_price_balance,captain_wallet_player_count)
         if st.session_state.sell_condition:
-            print(f"Captain wallet={st.session_state.captain_choice},bal={captain_wallet_price_balance},spent={total_purse_value-captain_wallet_price_balance},player= {captain_wallet_player_count}")
+            print(f"Captain wallet={st.session_state.captain_choice},bal={captain_wallet_price_balance},total spent={total_purse_value-captain_wallet_price_balance},player= {captain_wallet_player_count}")
             masterdf.loc[len(masterdf.index)] = list(player_sell_record)
             masterdf.to_csv(MASTER_DF_CSV,index=False)
             st.session_state.players_sold_count = str(masterdf[masterdf['status']=='sold']['status'].count())
@@ -162,9 +162,12 @@ def sell_player():
             row_id=st.session_state.walletdf.loc[st.session_state.walletdf['captain']==st.session_state.captain_choice].index[0]
             price_value = masterdf[masterdf['captain']==st.session_state.captain_choice]['price'].sum()
             player_count_value=masterdf[masterdf['captain']==st.session_state.captain_choice]['player'].count()
-            st.session_state.walletdf.loc[row_id,'spent']=price_value
+            st.session_state.walletdf.loc[row_id,'total spent']=price_value
             st.session_state.walletdf.loc[row_id,'player']=player_count_value
             st.session_state.walletdf.loc[row_id,'balance']=total_purse_value-price_value
+            tempdf=st.session_state.walletdf
+            # st.session_state.walletdf=get_max_price_spent_per_player(tempdf)
+
 
             with open(PLAYERS_DATA_JSON) as json_file:
                 players_data = json.load(json_file)
@@ -307,6 +310,18 @@ def potrait_image_orientation(image):
         pass
     return image,orientation_corrected
 
+def get_max_price_spent_per_player(temp_wallet_df):
+    masterdf = pd.read_csv(MASTER_DF_CSV)
+    for captain_choice in temp_wallet_df['captain'].unique():
+        # print(f"Calculating max price for {captain_choice}")
+        if type(captain_choice)== str:
+            max_price=(masterdf[masterdf['captain']==captain_choice]['price'].max())
+        else:
+            max_price=0        
+        # print(f"Max price for {captain_choice} = {max_price}")
+        temp_wallet_df.loc[temp_wallet_df['captain']==captain_choice,'max spent per player']=max_price
+    return temp_wallet_df
+
 
 # Initialize session state for dynamic elements
 if 'df' not in st.session_state:
@@ -318,7 +333,8 @@ if 'walletdf' not in st.session_state:
     if masterdf.empty:
         walletdf = pd.DataFrame(data={'captain':captain_names[1:]})
         walletdf[['balance']]=[total_purse_value]
-        walletdf[['spent']]=[0]
+        walletdf[['max spent per player']]=[0]
+        walletdf[['total spent']]=[0]
         walletdf[['player']]=[0]
         st.session_state.walletdf = walletdf
     else:
@@ -326,13 +342,26 @@ if 'walletdf' not in st.session_state:
         df2=masterdf[['captain','player']].groupby(['captain']).count()['player'].to_frame().reset_index().sort_values(by='captain')
         walletdf=df1.merge(df2,how='inner', on='captain')
         walletdf['balance'] = total_purse_value - walletdf['price']
-        walletdf.rename(columns={'price':'spent'},inplace=True)
-        walletdf=walletdf[['captain', 'balance','spent', 'player']]
+        walletdf.rename(columns={'price':'total spent'},inplace=True)
+        walletdf=walletdf[['captain', 'balance','total spent', 'player']]
         name_diff=list(set(captain_names[1:])-set(walletdf['captain'].values))
         df3 = pd.DataFrame(data={'captain':name_diff})
         df3[['balance']]=[total_purse_value]
-        df3[['spent']]=[0]
+        df3[['total spent']]=[0]
         df3[['player']]=[0]
+        # walletdf=pd.concat([walletdf,df3])
+        # walletdf=get_max_price_spent_per_player(walletdf)
+        # st.session_state.walletdf = walletdf
+        # for captain_choice in walletdf['captain'].unique():
+        #     print(f"Calculating max price for {captain_choice}")
+        #     if type(captain_choice)== str:
+        #         max_price=(masterdf[masterdf['captain']==captain_choice]['price'].max())
+        #     else:
+        #         max_price=0        
+        #     print(f"Max price for {captain_choice} = {max_price}")
+        #     walletdf.loc[walletdf['captain']==captain_choice,'max spent per player']=max_price
+        # st.session_state.walletdf = walletdf
+
         st.session_state.walletdf=pd.concat([walletdf,df3])
 if 'players_sold_count' not in st.session_state:
     masterdf = pd.read_csv(MASTER_DF_CSV)  
@@ -475,6 +504,11 @@ with wallet_tab:
     # Table Tab: Display the captain wallet DataFrame
     with st.container(border=True):
         if not st.session_state.walletdf.empty:
+            st.session_state.walletdf.reset_index(inplace=True,drop=True)
+            st.session_state.walletdf = get_max_price_spent_per_player(st.session_state.walletdf)
+            st.session_state.walletdf.replace(to_replace=np.nan, value=0, inplace=True)
+            st.session_state.walletdf= st.session_state.walletdf[[ 'captain', 'balance', 'max spent per player','total spent', 'player']]
+            # st.session_state.walletdf.rename(columns={'player':'# players purchased'},inplace=True)
             st.dataframe(st.session_state.walletdf.sort_values(by='captain'),use_container_width=True,hide_index=True)
         else:
             st.write("No data to display. Click FETCH to load data.")

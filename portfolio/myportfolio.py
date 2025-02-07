@@ -68,12 +68,17 @@ total_invested=np.matmul(my_holdings['Qty.'], my_holdings['Avg. cost'])
 my_holdings['total_invested']=my_holdings['Qty.']* my_holdings['Avg. cost']
 my_holdings['P&L %'] =np.round(my_holdings['P&L']/(my_holdings['Qty.']* my_holdings['Avg. cost']) * 100,2)
 my_holdings['invested %'] =np.round((my_holdings['Qty.']* my_holdings['Avg. cost'])/total_invested * 100,2)
+# print(my_holdings.columns)
+# print(my_holdings)
 
 investment_df=my_holdings[['Instrument','sector','total_invested',  'Cur. val', 'P&L','P&L %','invested %']].sort_values(by='total_invested',ascending=False).reset_index(drop=True)
-sector_invst_df=investment_df.groupby('sector').sum('total_invested').sort_values(by=['P&L','invested %'],ascending=False).reset_index(drop=False)
+print(investment_df.columns)
+print(investment_df)
 
-# print(sector_invst_df)
-# print(investment_df)
+sector_invst_df=investment_df.groupby('sector').sum('total_invested').sort_values(by=['invested %'],ascending=False).reset_index(drop=False)
+print(sector_invst_df.columns)
+print(sector_invst_df)
+
 
 def sector_invst_table():
     # Sort the dataframe by 'invested %'
@@ -99,12 +104,13 @@ def sector_invst_table():
 sector_pl_df=investment_df[['Instrument','sector', 'total_invested', 'Cur. val', 'P&L']].groupby('sector').agg({'total_invested':'sum','Cur. val':'sum','P&L':'sum','Instrument':'count'}).reset_index(drop=False)
 sector_pl_df['P&L %']=np.round((sector_pl_df['P&L'] / sector_pl_df['total_invested'] ) * 100,2)
 sector_pl_df=sector_pl_df.sort_values(by='P&L %',ascending=False).reset_index(drop=True)
-# print(sector_pl_df)
+print(sector_pl_df.columns)
 
 # Sector wise invested % and P&L %
 sector_invst_gain_df=sector_pl_df.merge(sector_invst_df,on=['sector'], how='inner')
-# print(sector_invst_gain_df.columns)
-sector_invst_gain_df=sector_invst_gain_df[['sector', 'Instrument','P&L %_x', 'invested %']]
+print(sector_invst_gain_df.columns)
+print(sector_invst_gain_df)
+sector_invst_gain_df=sector_invst_gain_df[['sector', 'Instrument','P&L %', 'invested %']]
 sector_invst_gain_df.rename(columns={'P&L %_x':'P&L %'},inplace=True)
 # print(sector_invst_gain_df)
 
@@ -189,4 +195,4 @@ wk52_low_df.reset_index(drop=True,inplace=True)
 #     dic= top_gainers(data)
 #     top_gainer_df=top_gainer_df.append(dic,ignore_index=True)
 # top_gainer_df=top_gainer_df[['symbol','ltp','high_price', 'low_price','open_price', 'perChange']]
-# print(top_gainer_df)    
+# # print(top_gainer_df)    

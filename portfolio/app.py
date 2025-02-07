@@ -1,54 +1,45 @@
 import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import myportfolio as mp
+import utils.investement_sector_wise as sector_invst
+from utils.gain_sector_wise import sector_invst_gain_df,sector_invst_gain_bar_chart
+from utils.wk52_high_low import wk52_high_df,wk52_low_df
+from utils.top_gainers import top_gainer_df
 
-
-    
-
-# with st.sidebar.container(border=True):
-#     # st.title("Upload your file")
-#     uploaded_file = st.file_uploader("Upload a new Holdings CSV file", type=["csv"],help="Upload a new holddings csv file if available,ignore if already provided.")
-
-# if uploaded_file is not None:
-#     # Load the uploaded CSV file into a DataFrame
-# df = pd.read_csv(uploaded_file)
-
-# df = pd.DataFrame()
 
 def display_dataframe(df):
     st.dataframe(df,use_container_width=True)
 
-# Define tabs
-sector_tab, investment_tab,sector_gain_tab,sector_gain_per_tab, wk52_high_tab, wk52_low_tab= st.tabs(["Investement by Sector", "Stocks", "Sector P&L", "Sector P&L %","52 week high", "52 week low"])
+# # Define tabs
+sector_tab, investment_tab,sector_gain_tab,sector_gain_per_tab, wk52_high_tab, wk52_low_tab,top_gainers_tab= \
+    st.tabs(["Investement by Sector", "Stocks", "Sector P&L", "Sector P&L %","52 week high", "52 week low","Top Gainers"])
 with sector_tab:
     with st.container(border=True):
-        st.pyplot(mp.sector_invst_table())
+        st.pyplot(sector_invst.investement_sector_wise_table_plot())
+
 
 with investment_tab:
     with st.container(border=True):
         st.spinner('Loading Invested Amount...')
-        display_dataframe(mp.investment_df)
+        display_dataframe(sector_invst.investment_df)
 
 with sector_gain_tab:
     with st.container(border=True):
-        display_dataframe(mp.sector_invst_gain_df)
+        display_dataframe(sector_invst_gain_df)
 
 with sector_gain_per_tab:
     with st.container(border=True):
-        st.pyplot(mp.sector_invst_gain_bar_chart())
+        st.pyplot(sector_invst_gain_bar_chart())
+
 
 with wk52_high_tab:
     st.spinner('Loading 52 week high...')
-    display_dataframe(mp.wk52_high_df)
+    display_dataframe(wk52_high_df)
 
 with wk52_low_tab:
     st.spinner('Loading 52 week low...')
-    display_dataframe(mp.wk52_low_df)
-    # st.dataframe(mp.wk52_low_df,use_container_width=True)
+    display_dataframe(wk52_low_df)
 
-# with top_gainers_tab:
-#     st.header("DataFrame 4")
-# st.spinner('Loading dataframe...')
-#     st.dataframe(df)
+
+with top_gainers_tab:
+     display_dataframe(top_gainer_df)
+
 

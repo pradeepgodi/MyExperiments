@@ -1,3 +1,7 @@
+gvenv/
+*ipynb
+*jpg
+*JPG
 .venv/*
 __pycache__
 sold_players
@@ -178,3 +182,9 @@ auction/enrolled_players/Player1_#123_8861421832_Beginner.JPG
 auction/enrolled_players/Player2_#456_9886142181_Advanced.JPG
 auction/enrolled_players/Player3_489_8861428932_intermediate.JPG
 auction/enrolled_players/Player4_#9876_88613421_All round.JPG
+google_drive/outh_client_secret.json
+auction/testai.py
+auction/config.YAML
+auction/.vscode/extensions.json
+portfolio/.vscode/settings.json
+*.ipynb_checkpoints

@@ -6,7 +6,7 @@ import random
 import datetime
 import numpy as np
 from PIL import ImageDraw,Image,ExifTags,ImageOps
-
+import yaml
 
 # Constants
 # Configurable parameters

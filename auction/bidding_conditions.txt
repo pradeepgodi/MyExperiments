@@ -1,0 +1,20 @@
+Auction Rules Implemented:
+1.Purse Size: 100000
+2.Maximum Bid Allowed for 1 Player :40000
+3.Base Price : 3000
+6.Captains need to keep minimum base amount in purse to buy out rest of the player to complete the 9 member team
+7.There will be two rounds of Auction, the first round will present all players and second round will be fast fire round where unsold players in the first round will again be auctioned (Second Round will be conducted w.r.t time constraint and if the second round is not possible rest of the players will go in lucky draw). Hence requesting you all to select the players in the first round to avoid Lucky Draws.
+8.All Captains will have 3000 blocked for each player to ensure, each team will have 9 players in the team (Including Captain).
+9.Players left after auction will be kept as backup in case any member from a team drops. In case there is a drop out, respective captain will be allocated the replacement based on lottery.
+
+
+Auction Rules from pdf: 
+1.Purse Size: 100000
+2.Maximum Bid Allowed for 1 Player :40000
+3.Base Price : 3000
+4.Bid will start from base price and will be incremented by 1000 till 12000 then increment of 2000
+5.In case of tie , player will be allocated to a captain based on chit system
+6.Captains need to keep minimum base amount in purse to buy out rest of the player to complete the 9 member team
+7.There will be two rounds of Auction, the first round will present all players and second round will be fast fire round where unsold players in the first round will again be auctioned (Second Round will be conducted w.r.t time constraint and if the second round is not possible rest of the players will go in lucky draw). Hence requesting you all to select the players in the first round to avoid Lucky Draws.
+8.All Captains will have 3000 blocked for each player to ensure, each team will have 9 players in the team (Including Captain).
+9.Players left after auction will be kept as backup in case any member from a team drops. In case there is a drop out, respective captain will be allocated the replacement based on lottery.

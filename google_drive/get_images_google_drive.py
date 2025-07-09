@@ -36,13 +36,13 @@ def extract_file_id(drive_url):
     else:
         raise ValueError("Invalid Google Drive URL. Could not extract file ID.")
 
-def download_file_from_drive(drive_url, output_file_path):
+def download_file_from_drive(drive_url, output_file_path,download_progress_text,player_name):
     """
     Downloads a file from Google Drive using its URL.
     """
     # Extract the file ID from the Google Drive URL
     file_id = extract_file_id(drive_url)
-    print(f"Extracted file ID: {file_id}")
+    # print(f"Extracted file ID: {file_id}")
     # Request to download the file
     request = service.files().get_media(fileId=file_id)
     # Create a file handle for the output file
@@ -51,20 +51,27 @@ def download_file_from_drive(drive_url, output_file_path):
         done = False
         while not done:
             status, done = downloader.next_chunk()
-            print(f"Download progress: {int(status.progress() * 100)}%")
-    print(f"File downloaded successfully and saved to {output_file_path}")
+            # {int(status.progress() * 100)}% 
+            print(f"Downloaded {download_progress_text} : {player_name}") 
+    # print(f"File downloaded successfully and saved to {player_name}")
 
 # Replace with your Google Drive file URL
 # drive_url = 'https://drive.google.com/file/d/12UOFS5v4E0PCp3H2vW1ceabOsXGaIJZq/view?usp=sharing'
 # output_file_path = 'downloaded_image.jpg'
 
 reg = pd.read_csv('EventRegistration.csv')
+total_players=reg.shape[0]
+
 reg['Mobile Number'] = reg['Mobile Number'].astype('str')
 reg['Wing Number'] = reg['Wing Number'].astype('str')
 reg['player']=reg['Full Name']+'_'+ (reg['Wing Number'])+'_'+ (reg['Mobile Number'])+'_'+  reg['Game Style']
+init_player_counter=0
+print("Total number of players enrolled =",total_players)
 for player in reg[['Player profile pic','player']].values:
+    init_player_counter=init_player_counter+1
+    download_progress_text=f"{init_player_counter}/{total_players}"
     drive_url = f"https://drive.google.com/file/d/{player[0].partition('&id=')[-1]}/view?usp=sharing"  
     output_file_path = '.\\enrolled_players\\'+player[1]+".jpg"
     # Call the function to download the file
-    download_file_from_drive(drive_url, output_file_path)
+    download_file_from_drive(drive_url, output_file_path,download_progress_text,player[1])
 

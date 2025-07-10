@@ -7,13 +7,17 @@ import datetime
 import numpy as np
 from PIL import ImageDraw,Image,ExifTags,ImageOps
 import yaml
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 # Constants
 # Configurable parameters
-MIN_BID_PRICE = 3000
-MAX_BID_PRICE = 40000
-TOTAL_PURSE_VALUE = 100000
-MAX_PLAYERS_PER_TEAM = 9
+MIN_BID_PRICE = int(os.getenv("MIN_BID_PRICE",0))
+MAX_BID_PRICE = int(os.getenv("MAX_BID_PRICE",40000))
+TOTAL_PURSE_VALUE = int(os.getenv("TOTAL_PURSE_VALUE", 1000000))
+MAX_PLAYERS_PER_TEAM = int(os.getenv("MAX_PLAYERS_PER_TEAM",9))
 
 # Dont edit the below constants
 MASTER_DF_CSV = 'masterdf.csv'

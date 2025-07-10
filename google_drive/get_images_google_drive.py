@@ -52,7 +52,7 @@ def download_file_from_drive(drive_url, output_file_path,download_progress_text,
         while not done:
             status, done = downloader.next_chunk()
             # {int(status.progress() * 100)}% 
-            print(f"Downloaded {download_progress_text} : {player_name}") 
+            print(f"{download_progress_text} => {player_name}") 
     # print(f"File downloaded successfully and saved to {player_name}")
 
 # Replace with your Google Drive file URL
@@ -63,15 +63,16 @@ reg = pd.read_csv('EventRegistration.csv')
 total_players=reg.shape[0]
 
 reg['Mobile Number'] = reg['Mobile Number'].astype('str')
-reg['Wing Number'] = reg['Wing Number'].astype('str')
-reg['player']=reg['Full Name']+'_'+ (reg['Wing Number'])+'_'+ (reg['Mobile Number'])+'_'+  reg['Game Style']
+reg['Flat number'] = reg['Flat number'].astype('str')
+reg['player']=reg['Full Name']+'_'+ (reg['Flat number'])+'_'+ (reg['Mobile Number'])+'_'+  reg['Game Style']
 init_player_counter=0
-print("Total number of players enrolled =",total_players)
+print("Total Enrollments: ",total_players)
+print("Download Started:")
 for player in reg[['Player profile pic','player']].values:
     init_player_counter=init_player_counter+1
     download_progress_text=f"{init_player_counter}/{total_players}"
-    drive_url = f"https://drive.google.com/file/d/{player[0].partition('&id=')[-1]}/view?usp=sharing"  
+    drive_url = f"https://drive.google.com/file/d/{player[0].partition('id=')[-1]}/view?usp=sharing" 
     output_file_path = '.\\enrolled_players\\'+player[1]+".jpg"
-    # Call the function to download the file
+    # # Call the function to download the file
     download_file_from_drive(drive_url, output_file_path,download_progress_text,player[1])
-
+print("Download Complete:")

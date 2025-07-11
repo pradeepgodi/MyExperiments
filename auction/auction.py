@@ -6,7 +6,7 @@ import random
 import datetime
 import numpy as np
 from PIL import ImageDraw,Image,ExifTags,ImageOps
-import yaml
+# import yaml
 from dotenv import load_dotenv
 
 
@@ -520,7 +520,7 @@ with player_tab:
     else:
         display_image=resize_image(oriented_image,1280,853)
         display_image=st.session_state.image_url
-    st.image(display_image, use_column_width=True)
+    st.image(display_image, use_container_width=True)
     player_col, sell_msg_col = st.columns([1,1])
     with player_col:
         st.header(f"{st.session_state.player_name}")

@@ -14,6 +14,7 @@ def makedir(name):
         # print("Created new folder =", name)
 makedir("enrolled_players")
 
+reg = pd.read_csv('Event Registration.csv')
 
 # Define the required scopes for accessing Google Drive
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -59,7 +60,7 @@ def download_file_from_drive(drive_url, output_file_path,download_progress_text,
 # drive_url = 'https://drive.google.com/file/d/12UOFS5v4E0PCp3H2vW1ceabOsXGaIJZq/view?usp=sharing'
 # output_file_path = 'downloaded_image.jpg'
 
-reg = pd.read_csv('EventRegistration.csv')
+
 total_players=reg.shape[0]
 
 reg['Mobile Number'] = reg['Mobile Number'].astype('str')
